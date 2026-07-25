@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <meta name="description" content="Customer Dashboard — BankPortal"/>
+</head>
+<body>
+<main layout:fragment="content">
+
+    <div class="page-header">
+        <h1>Welcome back, <span th:text="${customer?.firstName ?: 'Customer'}">User</span>! 👋</h1>
+        <p class="subtitle">Here's an overview of your banking activity</p>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
+            <div class="stat-value"
+                 th:text="${dashboard?.totalBalance != null ? '₹' + #numbers.formatDecimal(dashboard.totalBalance, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹0.00</div>
+            <div class="stat-label">Total Balance</div>
+        </div>
+
+        <div class="stat-card success">
+            <div class="stat-icon"><i class="bi bi-credit-card-2-front"></i></div>
+            <div class="stat-value" th:text="${accounts?.size() ?: 0}">0</div>
+            <div class="stat-label">Active Accounts</div>
+        </div>
+
+        <div class="stat-card info">
+            <div class="stat-icon"><i class="bi bi-arrow-left-right"></i></div>
+            <div class="stat-value"
+                 th:text="${dashboard?.totalTransactions ?: 0}">0</div>
+            <div class="stat-label">Total Transactions</div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+            <div class="stat-value"
+                 th:text="${dashboard?.lastTxnAmount != null ? '₹' + #numbers.formatDecimal(dashboard.lastTxnAmount, 1, 'COMMA', 2, 'POINT') : '—'}">—</div>
+            <div class="stat-label">Last Transaction</div>
+            <div class="stat-change" th:if="${dashboard?.lastTxnType}"
+                 th:classappend="${dashboard.lastTxnType.contains('DEPOSIT') or dashboard.lastTxnType.contains('IN')} ? 'up' : 'down'">
+                <i class="bi" th:classappend="${dashboard.lastTxnType.contains('DEPOSIT') or dashboard.lastTxnType.contains('IN')} ? 'bi-arrow-up' : 'bi-arrow-down'"></i>
+                <span th:text="${dashboard.lastTxnType}"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <!-- Account Cards -->
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">My Accounts</div>
+                        <div class="card-subtitle">Your linked bank accounts</div>
+                    </div>
+                    <a th:href="@{/customer/account}" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-arrow-right"></i> View All
+                    </a>
+                </div>
+
+                <div th:if="${accounts == null or accounts.isEmpty()}" class="table-empty">
+                    <div class="empty-icon">🏦</div>
+                    <p>No accounts yet. Contact your bank to open one.</p>
+                </div>
+
+                <div th:each="account : ${accounts}">
+                    <div class="balance-card" style="margin-bottom: 12px;">
+                        <div class="balance-label">
+                            <span th:text="${account.accountType}">SAVINGS</span> Account
+                        </div>
+                        <div class="balance-amount"
+                             th:text="'₹' + #numbers.formatDecimal(account.balance, 1, 'COMMA', 2, 'POINT')">₹0.00</div>
+                        <div class="balance-account-no" th:text="${account.accountNumber}">0000000000</div>
+                        <div class="balance-card-footer">
+                            <span class="balance-type" th:text="${account.status}">ACTIVE</span>
+                            <span class="text-sm" style="opacity: 0.7;"
+                                  th:text="${account.ifscCode}">IFSC</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Quick Actions</div>
+            </div>
+            <div class="quick-actions">
+                <a th:href="@{/customer/deposit}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(16,185,129,0.15); color: #10B981;">
+                        <i class="bi bi-arrow-down-circle"></i>
+                    </div>
+                    <span class="qa-label">Deposit</span>
+                </a>
+                <a th:href="@{/customer/withdraw}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(239,68,68,0.15); color: #EF4444;">
+                        <i class="bi bi-arrow-up-circle"></i>
+                    </div>
+                    <span class="qa-label">Withdraw</span>
+                </a>
+                <a th:href="@{/customer/transfer}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(79,110,247,0.15); color: #4F6EF7;">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </div>
+                    <span class="qa-label">Transfer</span>
+                </a>
+                <a th:href="@{/customer/history}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(245,158,11,0.15); color: #F59E0B;">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <span class="qa-label">History</span>
+                </a>
+                <a th:href="@{/customer/mini-statement}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(14,165,233,0.15); color: #0EA5E9;">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <span class="qa-label">Statement</span>
+                </a>
+                <a th:href="@{/customer/profile}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(99,102,241,0.15); color: #6366F1;">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <span class="qa-label">Profile</span>
+                </a>
+            </div>
+
+            <!-- KYC Alert -->
+            <div th:if="${customer != null and !customer.kycVerified}" class="alert alert-warning mt-4">
+                <span class="alert-icon"><i class="bi bi-shield-exclamation"></i></span>
+                <span>Your KYC is not verified. Some features may be limited. Please visit your branch.</span>
+            </div>
+
+            <!-- Not Approved Alert -->
+            <div th:if="${customer != null and !customer.approved}" class="alert alert-info mt-4">
+                <span class="alert-icon"><i class="bi bi-hourglass-split"></i></span>
+                <span>Your account is pending approval. An employee will review it shortly.</span>
+            </div>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

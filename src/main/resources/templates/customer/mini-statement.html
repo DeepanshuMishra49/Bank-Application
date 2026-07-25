@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="page-header">
+        <h1>Mini Statement</h1>
+        <p class="subtitle">Last 10 transactions for your account</p>
+    </div>
+
+    <div class="grid-2">
+        <!-- Select Account Form -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Select Account</div>
+            </div>
+            <form th:action="@{/customer/mini-statement}" method="get">
+                <div class="form-group">
+                    <label class="form-label" for="stmtAccount">Account Number</label>
+                    <select id="stmtAccount" name="accountNumber" class="form-select">
+                        <option value="">Choose account</option>
+                        <option th:each="acc : ${accounts}"
+                                th:value="${acc.accountNumber}"
+                                th:selected="${selectedAccount != null and selectedAccount == acc.accountNumber}"
+                                th:text="${acc.accountNumber + ' (' + acc.accountType + ')'}">
+                        </option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="bi bi-file-earmark-text"></i> View Statement
+                </button>
+            </form>
+
+            <div th:if="${selectedAccountDetails != null}" class="mt-4">
+                <div class="divider"></div>
+                <div class="text-sm text-muted mb-2">Account Details</div>
+                <div style="padding: 12px; background: var(--bg-input); border-radius: var(--radius-sm);">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-muted text-sm">Account No.</span>
+                        <span class="account-number text-sm" th:text="${selectedAccountDetails.accountNumber}">—</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-muted text-sm">Type</span>
+                        <span class="badge badge-secondary" th:text="${selectedAccountDetails.accountType}">—</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-muted text-sm">Balance</span>
+                        <span class="font-bold text-success"
+                              th:text="'₹' + #numbers.formatDecimal(selectedAccountDetails.balance, 1, 'COMMA', 2, 'POINT')">₹0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction List -->
+        <div class="card" th:if="${transactions != null}">
+            <div class="card-header">
+                <div class="card-title">Last 10 Transactions</div>
+                <span class="badge badge-primary" th:text="${transactions.size()} + ' records'">0 records</span>
+            </div>
+
+            <div th:if="${transactions.isEmpty()}" class="table-empty">
+                <div class="empty-icon">📋</div>
+                <p>No transactions found for this account.</p>
+            </div>
+
+            <div th:each="txn : ${transactions}" class="mini-statement-item">
+                <div class="ms-icon"
+                     th:style="${txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN')}
+                              ? 'background: rgba(16,185,129,0.15); color: #10B981;'
+                              : 'background: rgba(239,68,68,0.15); color: #EF4444;'">
+                    <i class="bi"
+                       th:classappend="${txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN')}
+                                      ? 'bi-arrow-down' : 'bi-arrow-up'"></i>
+                </div>
+                <div class="ms-details">
+                    <div class="ms-type" th:text="${txn.transactionType}">TYPE</div>
+                    <div class="ms-date" th:text="${#temporals.format(txn.createdAt, 'dd MMM yyyy HH:mm')}">Date</div>
+                    <div class="ms-ref" th:text="'Ref: ' + ${txn.referenceNumber}">Ref</div>
+                </div>
+                <div class="ms-amount"
+                     th:classappend="${txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN')} ? 'text-success' : 'text-danger'"
+                     th:text="${(txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN') ? '+' : '-') + '₹' + #numbers.formatDecimal(txn.amount, 1, 'COMMA', 2, 'POINT')}">
+                    ₹0
+                </div>
+            </div>
+
+            <div class="mt-4 flex justify-between items-center">
+                <a th:href="@{/customer/history}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-clock-history"></i> Full History
+                </a>
+                <a th:href="@{/customer/statement/download(accountNumber=${selectedAccount})}"
+                   class="btn btn-primary btn-sm">
+                    <i class="bi bi-download"></i> Download PDF
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

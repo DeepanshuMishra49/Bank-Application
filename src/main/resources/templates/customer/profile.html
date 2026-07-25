@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="page-header">
+        <h1>My Profile</h1>
+        <p class="subtitle">View and update your personal information</p>
+    </div>
+
+    <div class="grid-2">
+        <!-- Profile Info Card -->
+        <div class="card">
+            <div class="text-center mb-4">
+                <div class="profile-avatar"
+                     th:text="${customer?.firstName?.substring(0,1)?.toUpperCase() ?: 'U'}">U</div>
+                <div class="text-xl font-bold" th:text="${customer?.fullName ?: 'Customer'}">Name</div>
+                <div class="text-muted text-sm" th:text="${customer?.email}">email</div>
+                <span class="badge mt-2"
+                      th:classappend="${customer?.approved} ? 'badge-success' : 'badge-warning'"
+                      th:text="${customer?.approved ? 'Approved' : 'Pending Approval'}">Status</span>
+                &nbsp;
+                <span class="badge mt-2"
+                      th:classappend="${customer?.kycVerified} ? 'badge-success' : 'badge-danger'"
+                      th:text="${customer?.kycVerified ? 'KYC Verified' : 'KYC Pending'}">KYC</span>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="grid-2 mt-3">
+                <div>
+                    <div class="text-xs text-muted">Customer ID</div>
+                    <div class="font-semibold account-number" th:text="${customer?.customerId}">—</div>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Phone</div>
+                    <div class="font-semibold" th:text="${customer?.phone ?: '—'}">—</div>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Date of Birth</div>
+                    <div class="font-semibold" th:text="${customer?.dateOfBirth != null ? #temporals.format(customer.dateOfBirth, 'dd MMM yyyy') : '—'}">—</div>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Gender</div>
+                    <div class="font-semibold" th:text="${customer?.gender ?: '—'}">—</div>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Occupation</div>
+                    <div class="font-semibold" th:text="${customer?.occupation ?: '—'}">—</div>
+                </div>
+                <div>
+                    <div class="text-xs text-muted">Annual Income</div>
+                    <div class="font-semibold"
+                         th:text="${customer?.annualIncome != null ? '₹' + #numbers.formatDecimal(customer.annualIncome, 1, 'COMMA', 2, 'POINT') : '—'}">—</div>
+                </div>
+            </div>
+
+            <div class="divider mt-3"></div>
+
+            <div class="mt-3">
+                <div class="text-xs text-muted mb-2">Address</div>
+                <div class="text-secondary text-sm"
+                     th:if="${customer?.street != null}"
+                     th:text="${customer.street + ', ' + (customer.city ?: '') + ', ' + (customer.state ?: '') + ' — ' + (customer.pinCode ?: '')}">—</div>
+                <div class="text-muted text-sm" th:unless="${customer?.street != null}">No address on file</div>
+            </div>
+        </div>
+
+        <!-- Update Profile Form -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Update Profile</div>
+            </div>
+
+            <form th:action="@{/customer/profile/update}" method="post"
+                  th:object="${updateRequest}" data-validate="true" novalidate>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">First Name *</label>
+                        <input type="text" th:field="*{firstName}" class="form-control" required/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name *</label>
+                        <input type="text" th:field="*{lastName}" class="form-control" required/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="bi bi-phone"></i></span>
+                        <input type="tel" th:field="*{phone}" class="form-control" maxlength="10"/>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Gender</label>
+                        <select th:field="*{gender}" class="form-select">
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Occupation</label>
+                        <input type="text" th:field="*{occupation}" class="form-control"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Annual Income (₹)</label>
+                    <div class="input-group">
+                        <span class="input-icon">₹</span>
+                        <input type="number" th:field="*{annualIncome}" class="form-control" min="0"/>
+                    </div>
+                </div>
+
+                <div class="sidebar-section-label mb-2 mt-2">Address</div>
+
+                <div class="form-group">
+                    <label class="form-label">Street / Area</label>
+                    <input type="text" th:field="*{street}" class="form-control"/>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" th:field="*{city}" class="form-control"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">State</label>
+                        <input type="text" th:field="*{state}" class="form-control"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">PIN Code</label>
+                    <input type="text" th:field="*{pinCode}" class="form-control" maxlength="6"/>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full">
+                    <i class="bi bi-check2-circle"></i> Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

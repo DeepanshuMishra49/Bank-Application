@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="page-header">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1>Transaction History</h1>
+                <p class="subtitle">All your banking transactions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card mb-5">
+        <form th:action="@{/customer/history}" method="get" class="flex gap-3 items-center flex-wrap">
+            <div style="flex: 1; min-width: 180px;">
+                <label class="form-label">Account</label>
+                <select name="accountNumber" class="form-select">
+                    <option value="">All Accounts</option>
+                    <option th:each="acc : ${accounts}"
+                            th:value="${acc.accountNumber}"
+                            th:selected="${param.accountNumber == acc.accountNumber}"
+                            th:text="${acc.accountNumber + ' (' + acc.accountType + ')'}">
+                    </option>
+                </select>
+            </div>
+            <div style="flex: 0; min-width: 140px;">
+                <label class="form-label">From Date</label>
+                <input type="date" name="from" class="form-control" th:value="${param.from}"/>
+            </div>
+            <div style="flex: 0; min-width: 140px;">
+                <label class="form-label">To Date</label>
+                <input type="date" name="to" class="form-control" th:value="${param.to}"/>
+            </div>
+            <div style="align-self: flex-end;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">Transactions</div>
+            <span class="badge badge-primary" th:text="${transactions?.totalElements + ' total'}">0 total</span>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Reference</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Balance After</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${transactions == null or transactions.isEmpty()}">
+                        <td colspan="7" class="table-empty">
+                            <div class="empty-icon">📋</div>
+                            <p>No transactions found.</p>
+                        </td>
+                    </tr>
+                    <tr th:each="txn : ${transactions}">
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="txn-type-icon"
+                                     th:style="${txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN')}
+                                              ? 'background: rgba(16,185,129,0.15); color: #10B981;'
+                                              : 'background: rgba(239,68,68,0.15); color: #EF4444;'">
+                                    <i class="bi"
+                                       th:classappend="${txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN')}
+                                                      ? 'bi-arrow-down' : 'bi-arrow-up'"></i>
+                                </div>
+                                <span class="badge"
+                                      th:classappend="${txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN')} ? 'badge-success' : (${txn.transactionType?.name()?.contains('TRANSFER')} ? 'badge-info' : 'badge-danger')"
+                                      th:text="${txn.transactionType}">TYPE</span>
+                            </div>
+                        </td>
+                        <td class="monospace text-xs" th:text="${txn.referenceNumber}">REF</td>
+                        <td class="text-secondary text-sm" th:text="${txn.description ?: '—'}">—</td>
+                        <td>
+                            <span class="txn-amount"
+                                  th:classappend="${txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN')} ? 'credit' : 'debit'"
+                                  th:text="${(txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN') ? '+' : '-') + '₹' + #numbers.formatDecimal(txn.amount, 1, 'COMMA', 2, 'POINT')}">
+                                ₹0
+                            </span>
+                        </td>
+                        <td th:text="'₹' + #numbers.formatDecimal(txn.balanceAfter, 1, 'COMMA', 2, 'POINT')">₹0</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${txn.status?.name() == 'SUCCESS'} ? 'badge-success' : 'badge-danger'"
+                                  th:text="${txn.status}">SUCCESS</span>
+                        </td>
+                        <td class="text-muted text-sm"
+                            th:text="${#temporals.format(txn.createdAt, 'dd MMM yyyy HH:mm')}">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper" th:if="${transactions != null}">
+            <div class="pagination-info"
+                 th:text="'Showing ' + (${transactions.number * transactions.size + 1}) + ' to ' + ${T(java.lang.Math).min((transactions.number + 1) * transactions.size, transactions.totalElements)} + ' of ' + ${transactions.totalElements} + ' transactions'">
+            </div>
+            <div class="pagination">
+                <a class="page-btn" th:classappend="${transactions.first} ? 'disabled'"
+                   th:href="@{/customer/history(page=${transactions.number - 1})}">‹</a>
+                <a class="page-btn" th:each="i : ${#numbers.sequence(0, transactions.totalPages - 1)}"
+                   th:if="${i >= transactions.number - 2 and i <= transactions.number + 2}"
+                   th:classappend="${i == transactions.number} ? 'active'"
+                   th:href="@{/customer/history(page=${i})}"
+                   th:text="${i + 1}">1</a>
+                <a class="page-btn" th:classappend="${transactions.last} ? 'disabled'"
+                   th:href="@{/customer/history(page=${transactions.number + 1})}">›</a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <p class="subtitle">System-wide overview and analytics</p>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <div class="stat-icon"><i class="bi bi-people"></i></div>
+            <div class="stat-value" th:text="${dashboard?.totalCustomers ?: 0}">0</div>
+            <div class="stat-label">Total Customers</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-value" th:text="${dashboard?.pendingApprovals ?: 0}">0</div>
+            <div class="stat-label">Pending Approvals</div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-icon"><i class="bi bi-credit-card-2-front"></i></div>
+            <div class="stat-value" th:text="${dashboard?.totalAccounts ?: 0}">0</div>
+            <div class="stat-label">Total Accounts</div>
+        </div>
+        <div class="stat-card info">
+            <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-value" th:text="${dashboard?.activeAccounts ?: 0}">0</div>
+            <div class="stat-label">Active Accounts</div>
+        </div>
+        <div class="stat-card danger">
+            <div class="stat-icon"><i class="bi bi-slash-circle"></i></div>
+            <div class="stat-value" th:text="${dashboard?.frozenAccounts ?: 0}">0</div>
+            <div class="stat-label">Frozen Accounts</div>
+        </div>
+        <div class="stat-card secondary">
+            <div class="stat-icon"><i class="bi bi-arrow-left-right"></i></div>
+            <div class="stat-value" th:text="${dashboard?.transactionsToday ?: 0}">0</div>
+            <div class="stat-label">Transactions Today</div>
+        </div>
+        <div class="stat-card primary">
+            <div class="stat-icon"><i class="bi bi-bank"></i></div>
+            <div class="stat-value text-xl"
+                 th:text="${dashboard?.totalAssets != null ? '₹' + #numbers.formatDecimal(dashboard.totalAssets, 1, 'COMMA', 0, 'POINT') : '₹0'}">₹0</div>
+            <div class="stat-label">Total Assets</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="bi bi-shield-exclamation"></i></div>
+            <div class="stat-value" th:text="${dashboard?.pendingKyc ?: 0}">0</div>
+            <div class="stat-label">Pending KYC</div>
+        </div>
+    </div>
+
+    <!-- Charts + Activity -->
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Transaction Activity</div>
+                <span class="badge badge-primary">Last 7 Days</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="adminTxnChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Quick Actions</div>
+            </div>
+            <div class="quick-actions">
+                <a th:href="@{/admin/customers}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(79,110,247,0.15); color: #4F6EF7;">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <span class="qa-label">Manage Customers</span>
+                </a>
+                <a th:href="@{/admin/accounts}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(16,185,129,0.15); color: #10B981;">
+                        <i class="bi bi-credit-card-2-front"></i>
+                    </div>
+                    <span class="qa-label">Manage Accounts</span>
+                </a>
+                <a th:href="@{/admin/transactions}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(245,158,11,0.15); color: #F59E0B;">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </div>
+                    <span class="qa-label">All Transactions</span>
+                </a>
+                <a th:href="@{/admin/employees}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(99,102,241,0.15); color: #6366F1;">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <span class="qa-label">Manage Employees</span>
+                </a>
+                <a th:href="@{/swagger-ui.html}" target="_blank" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(14,165,233,0.15); color: #0EA5E9;">
+                        <i class="bi bi-code-square"></i>
+                    </div>
+                    <span class="qa-label">API Docs</span>
+                </a>
+                <a th:href="@{/actuator/health}" target="_blank" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(239,68,68,0.15); color: #EF4444;">
+                        <i class="bi bi-activity"></i>
+                    </div>
+                    <span class="qa-label">System Health</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block layout:fragment="scripts">
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const deposits     = [12000, 45000, 23000, 67000, 32000, 18000, 50000];
+    const withdrawals  = [8000,  23000, 15000, 42000, 21000, 11000, 30000];
+    BankingApp.initAdminTransactionChart('adminTxnChart', labels, deposits, withdrawals);
+});
+</script>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,121 @@
+spring:
+  application:
+    name: Banking Management System
+
+  # ─── DataSource ───────────────────────────────────────────────────────────────
+  datasource:
+    url: # TODO: Set your PostgreSQL URL, e.g. jdbc:postgresql://localhost:5432/banking_db
+    username: # TODO: Set your PostgreSQL username
+    password: # TODO: Set your PostgreSQL password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      pool-name: BankingHikariPool
+
+  # ─── JPA / Hibernate ──────────────────────────────────────────────────────────
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        default_schema: public
+
+  # ─── Flyway ───────────────────────────────────────────────────────────────────
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    schemas: public
+
+  # ─── Security / Session ───────────────────────────────────────────────────────
+  session:
+    timeout: 30m
+
+  # ─── Mail (Placeholders — configure before enabling) ─────────────────────────
+  mail:
+    host: # TODO: SMTP host, e.g. smtp.gmail.com
+    port: 587
+    username: # TODO: SMTP username
+    password: # TODO: SMTP password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    enabled: false   # Set to true once SMTP is configured
+
+  # ─── Web / Multipart ──────────────────────────────────────────────────────────
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+
+# ─── Server ───────────────────────────────────────────────────────────────────
+server:
+  port: 8080
+  servlet:
+    context-path: /
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        secure: false   # Set to true in production (HTTPS only)
+        same-site: strict
+  error:
+    whitelabel:
+      enabled: false
+    path: /error
+
+# ─── Actuator ─────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# ─── SpringDoc / Swagger ──────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    disable-swagger-default-url: true
+  show-actuator: false
+
+# ─── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  config: classpath:logback-spring.xml
+  level:
+    com.banking: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+
+# ─── Application-specific ─────────────────────────────────────────────────────
+banking:
+  security:
+    max-failed-attempts: 5
+    lock-time-duration: 15   # minutes
+  account:
+    default-daily-limit: 100000   # INR 1,00,000
+    minimum-balance: 500          # INR 500
+  file:
+    upload-dir: ./uploads/profiles
+  pdf:
+    output-dir: ./uploads/statements

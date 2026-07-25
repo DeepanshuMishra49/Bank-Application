@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="page-header">
+        <h1>Employee Management</h1>
+        <p class="subtitle">Manage bank employees and their access</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">All Employees</div>
+            <span class="badge badge-primary" th:text="${employees?.totalElements + ' total'}">0</span>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Employee ID</th>
+                        <th>Designation</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${employees == null or employees.isEmpty()}">
+                        <td colspan="6" class="table-empty">
+                            <div class="empty-icon">👔</div>
+                            <p>No employees found.</p>
+                        </td>
+                    </tr>
+                    <tr th:each="emp : ${employees}">
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <div class="user-avatar" style="width:36px; height:36px; font-size:0.875rem;"
+                                     th:text="${emp.firstName?.substring(0,1)?.toUpperCase() ?: 'E'}">E</div>
+                                <div>
+                                    <div class="font-semibold" th:text="${emp.fullName}">Name</div>
+                                    <div class="text-xs text-muted" th:text="${emp.email}">email</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="account-number text-sm" th:text="${emp.customerId}">—</td>
+                        <td class="text-secondary text-sm" th:text="${emp.occupation ?: '—'}">—</td>
+                        <td class="text-secondary text-sm" th:text="${emp.phone ?: '—'}">—</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${emp.approved} ? 'badge-success' : 'badge-danger'"
+                                  th:text="${emp.approved ? 'Active' : 'Inactive'}">Active</span>
+                        </td>
+                        <td class="text-muted text-sm"
+                            th:text="${emp.createdAt != null ? #temporals.format(emp.createdAt, 'dd MMM yyyy') : '—'}">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper" th:if="${employees != null and employees.totalPages > 1}">
+            <div class="pagination-info"
+                 th:text="'Page ' + (${employees.number + 1}) + ' of ' + ${employees.totalPages}">
+            </div>
+            <div class="pagination">
+                <a class="page-btn" th:classappend="${employees.first} ? 'disabled'"
+                   th:href="@{/admin/employees(page=${employees.number - 1})}">‹</a>
+                <a class="page-btn" th:each="i : ${#numbers.sequence(0, employees.totalPages - 1)}"
+                   th:classappend="${i == employees.number} ? 'active'"
+                   th:href="@{/admin/employees(page=${i})}"
+                   th:text="${i + 1}">1</a>
+                <a class="page-btn" th:classappend="${employees.last} ? 'disabled'"
+                   th:href="@{/admin/employees(page=${employees.number + 1})}">›</a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

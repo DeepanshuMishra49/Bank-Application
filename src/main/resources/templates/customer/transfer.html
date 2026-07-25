@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="page-header">
+        <h1>Fund Transfer</h1>
+        <p class="subtitle">Transfer money to any bank account securely</p>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Transfer Details</div>
+            </div>
+
+            <form th:action="@{/customer/transfer}" method="post"
+                  th:object="${transferRequest}" data-validate="true" novalidate>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="form-group">
+                    <label class="form-label" for="fromAccountNumber">From Account *</label>
+                    <select id="fromAccountNumber" th:field="*{fromAccountNumber}"
+                            class="form-select" required>
+                        <option value="">Select source account</option>
+                        <option th:each="acc : ${accounts}"
+                                th:value="${acc.accountNumber}"
+                                th:text="${acc.accountNumber + ' — ₹' + #numbers.formatDecimal(acc.balance, 1, 'COMMA', 2, 'POINT') + ' (' + acc.accountType + ')'}">
+                        </option>
+                    </select>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('fromAccountNumber')}">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <span th:errors="*{fromAccountNumber}"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="toAccountNumber">To Account Number *</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="bi bi-credit-card"></i></span>
+                        <input id="toAccountNumber" type="text" th:field="*{toAccountNumber}"
+                               class="form-control" th:classappend="${#fields.hasErrors('toAccountNumber')} ? 'is-invalid'"
+                               placeholder="Enter beneficiary account number"
+                               maxlength="20" required/>
+                    </div>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('toAccountNumber')}">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <span th:errors="*{toAccountNumber}"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="transferAmount">Amount (₹) *</label>
+                    <div class="input-group">
+                        <span class="input-icon">₹</span>
+                        <input id="transferAmount" type="number" th:field="*{amount}"
+                               class="form-control" th:classappend="${#fields.hasErrors('amount')} ? 'is-invalid'"
+                               placeholder="0.00" min="1" step="0.01"
+                               data-type="amount" required/>
+                        <span class="input-suffix">INR</span>
+                    </div>
+                    <div class="invalid-feedback" th:if="${#fields.hasErrors('amount')}">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <span th:errors="*{amount}"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="transferDesc">Description (Optional)</label>
+                    <input id="transferDesc" type="text" th:field="*{description}"
+                           class="form-control" placeholder="e.g. Rent payment, Family support"/>
+                </div>
+
+                <div class="alert alert-warning">
+                    <span class="alert-icon"><i class="bi bi-shield-exclamation"></i></span>
+                    <div>
+                        <strong>Security Notice:</strong> Always verify the beneficiary account number before confirming.
+                        Transfers cannot be reversed once processed.
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full btn-lg mt-2"
+                        onclick="return confirm('Confirm fund transfer to the specified account?')">
+                    <i class="bi bi-arrow-left-right"></i>
+                    Confirm Transfer
+                </button>
+            </form>
+        </div>
+
+        <!-- Account Info Panel -->
+        <div>
+            <div class="card mb-4">
+                <div class="card-title mb-3">Your Accounts</div>
+                <div th:each="acc : ${accounts}" class="flex justify-between items-center mb-3"
+                     style="padding: 12px; background: var(--bg-input); border-radius: var(--radius-sm);">
+                    <div>
+                        <div class="text-sm font-semibold" th:text="${acc.accountType}">SAVINGS</div>
+                        <div class="account-number" th:text="${acc.accountNumber}">0000</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-success"
+                             th:text="'₹' + #numbers.formatDecimal(acc.balance, 1, 'COMMA', 2, 'POINT')">₹0</div>
+                        <div class="text-xs text-muted">Balance</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title mb-3">Transfer Tips</div>
+                <div class="flex gap-3 mb-3">
+                    <span style="font-size: 1.2rem;">✅</span>
+                    <div class="text-sm text-secondary">Daily transfer limit resets at midnight</div>
+                </div>
+                <div class="flex gap-3 mb-3">
+                    <span style="font-size: 1.2rem;">⚡</span>
+                    <div class="text-sm text-secondary">Transfers within BankPortal are instant</div>
+                </div>
+                <div class="flex gap-3 mb-3">
+                    <span style="font-size: 1.2rem;">🔒</span>
+                    <div class="text-sm text-secondary">Minimum balance of ₹500 must be maintained</div>
+                </div>
+                <div class="flex gap-3">
+                    <span style="font-size: 1.2rem;">📞</span>
+                    <div class="text-sm text-secondary">Call 1800-XXX-XXXX for 24/7 support</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>
