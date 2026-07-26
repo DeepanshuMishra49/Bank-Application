@@ -39,12 +39,12 @@
         <div class="stat-card warning">
             <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
             <div class="stat-value"
-                 th:text="${dashboard?.lastTxnAmount != null ? '₹' + #numbers.formatDecimal(dashboard.lastTxnAmount, 1, 'COMMA', 2, 'POINT') : '—'}">—</div>
+                 th:text="${dashboard?.lastTransactionAmount != null ? '₹' + #numbers.formatDecimal(dashboard.lastTransactionAmount, 1, 'COMMA', 2, 'POINT') : '—'}">—</div>
             <div class="stat-label">Last Transaction</div>
-            <div class="stat-change" th:if="${dashboard?.lastTxnType}"
-                 th:classappend="${dashboard.lastTxnType.contains('DEPOSIT') or dashboard.lastTxnType.contains('IN')} ? 'up' : 'down'">
-                <i class="bi" th:classappend="${dashboard.lastTxnType.contains('DEPOSIT') or dashboard.lastTxnType.contains('IN')} ? 'bi-arrow-up' : 'bi-arrow-down'"></i>
-                <span th:text="${dashboard.lastTxnType}"></span>
+            <div class="stat-change" th:if="${dashboard?.lastTransactionType}"
+                 th:classappend="${dashboard.lastTransactionType.contains('DEPOSIT') or dashboard.lastTransactionType.contains('IN')} ? 'up' : 'down'">
+                <i class="bi" th:classappend="${dashboard.lastTransactionType.contains('DEPOSIT') or dashboard.lastTransactionType.contains('IN')} ? 'bi-arrow-up' : 'bi-arrow-down'"></i>
+                <span th:text="${dashboard.lastTransactionType}"></span>
             </div>
         </div>
     </div>

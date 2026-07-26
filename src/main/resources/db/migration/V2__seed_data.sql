@@ -18,7 +18,7 @@ VALUES (
     '00000000-0000-0000-0001-000000000001',
     'admin',
     'admin@bank.com',
-    '$2a$12$D4cL.XVPNYFdNaVn3Z.UiOhOxeRNBjrb9L6VlzO/TZrJiXwtlV/0S',
+    '$2b$12$NQo14xs3uxVL7DJd7sZuPubphXy3PduiReOKec/Q75RcOC6eNFd.K',
     '9000000000',
     TRUE,
     TRUE
@@ -38,7 +38,7 @@ VALUES (
     '00000000-0000-0000-0002-000000000001',
     'emp001',
     'employee@bank.com',
-    '$2a$12$LkzGqhqf2XBJfJAalqXxQenGzVGMvMbKD4WS7kgkDrAjIKpHx/F7G',
+    '$2b$12$4M5DA24TJTPtbuYnJfT4U.PxC5OT3oYiy59CFpXwX1f9SiancxIMO',
     '9100000001',
     TRUE,
     TRUE

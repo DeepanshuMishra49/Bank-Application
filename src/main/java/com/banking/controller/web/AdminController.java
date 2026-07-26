@@ -65,7 +65,7 @@ public class AdminController {
         model.addAttribute("search", search);
         model.addAttribute("pageTitle", "Manage Customers");
         model.addAttribute("createRequest", new CreateCustomerRequest(
-                "", "", "", "", "", null, null, null, null, null, null));
+                "", "", "", "", "", null, null, null, null, null, null, null));
         return "admin/customers";
     }
 

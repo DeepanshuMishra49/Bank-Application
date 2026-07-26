@@ -4,9 +4,9 @@ spring:
 
   # ─── DataSource ───────────────────────────────────────────────────────────────
   datasource:
-    url: # TODO: Set your PostgreSQL URL, e.g. jdbc:postgresql://localhost:5432/banking_db
-    username: # TODO: Set your PostgreSQL username
-    password: # TODO: Set your PostgreSQL password
+    url: jdbc:postgresql://localhost:5432/banking_db
+    username: postgres
+    password: postgresnew
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-timeout: 30000
@@ -41,19 +41,18 @@ spring:
   session:
     timeout: 30m
 
-  # ─── Mail (Placeholders — configure before enabling) ─────────────────────────
   mail:
-    host: # TODO: SMTP host, e.g. smtp.gmail.com
-    port: 587
-    username: # TODO: SMTP username
-    password: # TODO: SMTP password
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-    enabled: false   # Set to true once SMTP is configured
+  host: smtp.gmail.com
+  port: 587
+  username: deep270804@gmail.com
+  password: abcd efgh ijkl mnop
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+  enabled: true
 
   # ─── Web / Multipart ──────────────────────────────────────────────────────────
   servlet:

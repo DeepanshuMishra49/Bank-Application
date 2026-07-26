@@ -39,13 +39,13 @@
         </div>
         <div class="stat-card secondary">
             <div class="stat-icon"><i class="bi bi-arrow-left-right"></i></div>
-            <div class="stat-value" th:text="${dashboard?.transactionsToday ?: 0}">0</div>
+            <div class="stat-value" th:text="${dashboard?.totalTransactionsToday ?: 0}">0</div>
             <div class="stat-label">Transactions Today</div>
         </div>
         <div class="stat-card primary">
             <div class="stat-icon"><i class="bi bi-bank"></i></div>
             <div class="stat-value text-xl"
-                 th:text="${dashboard?.totalAssets != null ? '₹' + #numbers.formatDecimal(dashboard.totalAssets, 1, 'COMMA', 0, 'POINT') : '₹0'}">₹0</div>
+                 th:text="${dashboard?.totalAssetsUnderManagement != null ? '₹' + #numbers.formatDecimal(dashboard.totalAssetsUnderManagement, 1, 'COMMA', 0, 'POINT') : '₹0'}">₹0</div>
             <div class="stat-label">Total Assets</div>
         </div>
         <div class="stat-card warning">

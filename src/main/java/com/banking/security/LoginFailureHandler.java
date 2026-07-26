@@ -8,13 +8,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.*;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Handles failed login attempts by incrementing failure counters and
@@ -35,13 +36,13 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
             AuthenticationException exception) throws IOException, ServletException {
 
         String usernameOrEmail = request.getParameter("username");
-        String errorParam = "error";
+        AtomicReference<String> errorParam = new AtomicReference<>("error");
 
         if (exception instanceof LockedException) {
-            errorParam = "locked";
+            errorParam.set("locked");
             log.warn("Login attempt on locked account: {}", usernameOrEmail);
         } else if (exception instanceof DisabledException) {
-            errorParam = "disabled";
+            errorParam.set("disabled");
             log.warn("Login attempt on disabled account: {}", usernameOrEmail);
         } else if (exception instanceof BadCredentialsException || exception instanceof UsernameNotFoundException) {
             // Increment failed attempts
@@ -53,7 +54,7 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
                 if (newAttempts >= BankingConstants.MAX_FAILED_ATTEMPTS) {
                     userRepository.lockAccount(user.getEmail());
                     log.warn("Account locked due to {} failed attempts: {}", newAttempts, user.getEmail());
-                    errorParam = "locked";
+                    errorParam.set("locked");
                 }
             });
         }
@@ -61,6 +62,6 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
         String ip = request.getRemoteAddr();
         log.warn("Authentication failure from IP: {} - {}", ip, exception.getMessage());
 
-        response.sendRedirect(request.getContextPath() + "/login?" + errorParam);
+        response.sendRedirect(request.getContextPath() + "/login?" + errorParam.get());
     }
 }
