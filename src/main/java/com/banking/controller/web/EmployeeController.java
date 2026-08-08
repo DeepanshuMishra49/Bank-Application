@@ -142,8 +142,8 @@ public class EmployeeController {
             @RequestParam(defaultValue = "15") int size,
             Model model) {
 
-        Page<CustomerResponse> pending = employeeService.getPendingCustomers(
-                PageRequest.of(page, size, Sort.by("createdAt")));
+        Page<CustomerResponse> pending = customerService.getAllCustomers(
+                PageRequest.of(page, size, Sort.by("createdAt").descending()));
 
         model.addAttribute("pendingCustomers", pending);
         model.addAttribute("pageTitle", "KYC Verification");

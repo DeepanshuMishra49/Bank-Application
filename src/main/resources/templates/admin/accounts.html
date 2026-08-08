@@ -63,7 +63,7 @@
                         </td>
                         <td><span class="badge badge-secondary" th:text="${acc.accountType}">SAVINGS</span></td>
                         <td class="font-bold"
-                            th:text="'₹' + #numbers.formatDecimal(acc.balance, 1, 'COMMA', 2, 'POINT')">₹0</td>
+                            th:text="${acc?.balance != null ? '₹' + #numbers.formatDecimal(acc.balance, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹0</td>
                         <td>
                             <span class="flex items-center gap-1">
                                 <span class="status-dot"
@@ -74,7 +74,7 @@
                             </span>
                         </td>
                         <td class="text-secondary text-sm"
-                            th:text="'₹' + #numbers.formatDecimal(acc.dailyTransferLimit, 1, 'COMMA', 0, 'POINT')">₹1,00,000</td>
+                            th:text="${acc?.dailyTransferLimit != null ? '₹' + #numbers.formatDecimal(acc.dailyTransferLimit, 1, 'COMMA', 0, 'POINT') : '₹0'}">₹1,00,000</td>
                         <td class="text-muted text-sm"
                             th:text="${acc.createdAt != null ? #temporals.format(acc.createdAt, 'dd MMM yyyy') : '—'}">—</td>
                         <td>

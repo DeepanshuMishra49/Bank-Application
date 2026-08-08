@@ -74,7 +74,7 @@
                             <span th:text="${account.accountType}">SAVINGS</span> Account
                         </div>
                         <div class="balance-amount"
-                             th:text="'₹' + #numbers.formatDecimal(account.balance, 1, 'COMMA', 2, 'POINT')">₹0.00</div>
+                             th:text="${account?.balance != null ? '₹' + #numbers.formatDecimal(account.balance, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹0.00</div>
                         <div class="balance-account-no" th:text="${account.accountNumber}">0000000000</div>
                         <div class="balance-card-footer">
                             <span class="balance-type" th:text="${account.status}">ACTIVE</span>
@@ -131,9 +131,14 @@
             </div>
 
             <!-- KYC Alert -->
-            <div th:if="${customer != null and !customer.kycVerified}" class="alert alert-warning mt-4">
-                <span class="alert-icon"><i class="bi bi-shield-exclamation"></i></span>
-                <span>Your KYC is not verified. Some features may be limited. Please visit your branch.</span>
+            <div th:if="${customer != null and !customer.kycVerified}" class="alert alert-warning mt-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="alert-icon"><i class="bi bi-shield-exclamation"></i></span>
+                    <span>Your KYC is not verified. Please submit your identity details.</span>
+                </div>
+                <a th:href="@{/customer/kyc}" class="btn btn-warning btn-sm" style="white-space:nowrap;">
+                    <i class="bi bi-shield-upload"></i> Complete KYC
+                </a>
             </div>
 
             <!-- Not Approved Alert -->

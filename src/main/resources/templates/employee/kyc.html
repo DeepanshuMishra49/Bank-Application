@@ -29,6 +29,7 @@
                         <th>Customer</th>
                         <th>Customer ID</th>
                         <th>Phone</th>
+                        <th>KYC Status</th>
                         <th>Registered On</th>
                         <th>Actions</th>
                     </tr>
@@ -47,11 +48,16 @@
                         </td>
                         <td class="account-number text-sm" th:text="${cust.customerId}">—</td>
                         <td class="text-secondary text-sm" th:text="${cust.phone ?: '—'}">—</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${cust.kycVerified} ? 'badge-success' : 'badge-warning'"
+                                  th:text="${cust.kycVerified ? '✓ Verified' : '⏳ Pending'}">Status</span>
+                        </td>
                         <td class="text-muted text-sm"
                             th:text="${cust.createdAt != null ? #temporals.format(cust.createdAt, 'dd MMM yyyy') : '—'}">—</td>
                         <td>
                             <div class="flex gap-2">
-                                <form th:action="@{/employee/kyc/{id}/verify(id=${cust.customerId})}"
+                                <form th:unless="${cust.kycVerified}" th:action="@{/employee/kyc/{id}/verify(id=${cust.customerId})}"
                                       method="post">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <button type="submit" class="btn btn-success btn-sm"
@@ -59,10 +65,14 @@
                                         <i class="bi bi-shield-check"></i> Verify
                                     </button>
                                 </form>
-                                <button class="btn btn-danger btn-sm"
-                                        th:onclick="'openRejectModal(\'' + ${cust.customerId} + '\')'">
+                                <button th:unless="${cust.kycVerified}" class="btn btn-danger btn-sm"
+                                        th:data-customer-id="${cust.customerId}"
+                                        onclick="openRejectModal(this.getAttribute('data-customer-id'))">
                                     <i class="bi bi-shield-x"></i> Reject
                                 </button>
+                                <span th:if="${cust.kycVerified}" class="text-success text-sm font-semibold">
+                                    <i class="bi bi-check-circle-fill"></i> Verified
+                                </span>
                             </div>
                         </td>
                     </tr>

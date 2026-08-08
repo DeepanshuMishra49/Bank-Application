@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="page-header">
+        <h1>KYC Verification</h1>
+        <p class="subtitle">Submit your identity documents for Know Your Customer (KYC) compliance</p>
+    </div>
+
+    <!-- Status Card -->
+    <div class="card mb-5">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div style="font-size: 2.5rem;">
+                    <span th:if="${customer?.kycVerified}">✅</span>
+                    <span th:if="${!customer?.kycVerified and kycDetail?.rejectionReason != null}">❌</span>
+                    <span th:if="${!customer?.kycVerified and kycDetail?.rejectionReason == null and kycDetail != null}">⏳</span>
+                    <span th:if="${!customer?.kycVerified and kycDetail == null}">📄</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg">
+                        Status: 
+                        <span th:if="${customer?.kycVerified}" class="text-success">Verified</span>
+                        <span th:if="${!customer?.kycVerified and kycDetail?.rejectionReason != null}" class="text-danger">Rejected</span>
+                        <span th:if="${!customer?.kycVerified and kycDetail?.rejectionReason == null and kycDetail != null}" class="text-warning">Under Review</span>
+                        <span th:if="${!customer?.kycVerified and kycDetail == null}" class="text-muted">Not Submitted</span>
+                    </h3>
+                    <p class="text-sm text-secondary mt-1" th:if="${customer?.kycVerified}">
+                        Your identity has been verified by bank officers. You have full access to all banking services.
+                    </p>
+                    <p class="text-sm text-secondary mt-1" th:if="${!customer?.kycVerified and kycDetail?.rejectionReason != null}">
+                        Reason for rejection: <strong class="text-danger" th:text="${kycDetail.rejectionReason}">Reason</strong>. Please resubmit your document details below.
+                    </p>
+                    <p class="text-sm text-secondary mt-1" th:if="${!customer?.kycVerified and kycDetail?.rejectionReason == null and kycDetail != null}">
+                        Your KYC application is currently being processed by bank officers.
+                    </p>
+                    <p class="text-sm text-secondary mt-1" th:if="${!customer?.kycVerified and kycDetail == null}">
+                        Please submit your valid government-issued ID details below to complete verification.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KYC Form Card -->
+    <div class="card" th:unless="${customer?.kycVerified}">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="bi bi-card-heading"></i> 
+                <span th:text="${kycDetail != null ? 'Update KYC Details' : 'Submit Identity Document'}">Submit Document</span>
+            </div>
+        </div>
+
+        <form th:action="@{/customer/kyc/submit}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Document Type *</label>
+                    <select name="documentType" class="form-select" required>
+                        <option value="">Select Document Type</option>
+                        <option value="AADHAAR_CARD" th:selected="${kycDetail?.documentType?.name() == 'AADHAAR_CARD'}">Aadhaar Card</option>
+                        <option value="PAN_CARD" th:selected="${kycDetail?.documentType?.name() == 'PAN_CARD'}">PAN Card</option>
+                        <option value="PASSPORT" th:selected="${kycDetail?.documentType?.name() == 'PASSPORT'}">Passport</option>
+                        <option value="DRIVING_LICENSE" th:selected="${kycDetail?.documentType?.name() == 'DRIVING_LICENSE'}">Driving License</option>
+                        <option value="VOTER_ID" th:selected="${kycDetail?.documentType?.name() == 'VOTER_ID'}">Voter ID</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Document Number *</label>
+                    <input type="text" name="documentNumber" class="form-control" 
+                           placeholder="e.g. 1234 5678 9012 or ABCDE1234F"
+                           th:value="${kycDetail?.documentNumber}" required/>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-shield-upload"></i> Submit for Verification
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Document Info Card if Verified -->
+    <div class="card" th:if="${customer?.kycVerified}">
+        <div class="card-header">
+            <div class="card-title"><i class="bi bi-shield-check text-success"></i> Verified Document Information</div>
+        </div>
+        <div class="grid-2" th:if="${kycDetail != null}">
+            <div>
+                <div class="text-xs text-muted">Document Type</div>
+                <div class="font-semibold" th:text="${kycDetail.documentType}">-</div>
+            </div>
+            <div>
+                <div class="text-xs text-muted">Document Number</div>
+                <div class="font-semibold account-number" th:text="${kycDetail.documentNumber}">-</div>
+            </div>
+            <div>
+                <div class="text-xs text-muted">Verified By</div>
+                <div class="font-semibold" th:text="${kycDetail.verifiedBy ?: 'Bank Officer'}">-</div>
+            </div>
+            <div>
+                <div class="text-xs text-muted">Verification Date</div>
+                <div class="font-semibold" th:text="${kycDetail.verifiedAt != null ? #temporals.format(kycDetail.verifiedAt, 'dd MMM yyyy, HH:mm') : '-'}">-</div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

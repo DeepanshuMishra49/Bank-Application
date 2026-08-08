@@ -60,6 +60,22 @@
             <div class="divider mt-3"></div>
 
             <div class="mt-3">
+                <div class="text-xs text-muted mb-2">My Bank Accounts</div>
+                <div th:if="${accounts != null and !accounts.isEmpty()}">
+                    <div th:each="acc : ${accounts}" style="padding:8px 12px; background:var(--bg-input); border-radius:var(--radius-sm); margin-bottom:6px;" class="flex justify-between items-center">
+                        <div>
+                            <span class="badge badge-secondary text-xs" th:text="${acc.accountType}">SAVINGS</span>
+                            <span class="font-semibold account-number text-sm ml-2" th:text="${acc.accountNumber}">0000</span>
+                        </div>
+                        <div class="font-bold text-success text-sm" th:text="${acc?.balance != null ? '₹' + #numbers.formatDecimal(acc.balance, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹0</div>
+                    </div>
+                </div>
+                <div class="text-muted text-sm" th:unless="${accounts != null and !accounts.isEmpty()}">No active bank accounts</div>
+            </div>
+
+            <div class="divider mt-3"></div>
+
+            <div class="mt-3">
                 <div class="text-xs text-muted mb-2">Address</div>
                 <div class="text-secondary text-sm"
                      th:if="${customer?.street != null}"

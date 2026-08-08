@@ -34,6 +34,7 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    validate-on-migrate: false
     locations: classpath:db/migration
     schemas: public
 
@@ -42,17 +43,17 @@ spring:
     timeout: 30m
 
   mail:
-  host: smtp.gmail.com
-  port: 587
-  username: deep270804@gmail.com
-  password: abcd efgh ijkl mnop
-  properties:
-    mail:
-      smtp:
-        auth: true
-        starttls:
-          enable: true
-  enabled: true
+    host: smtp.gmail.com
+    port: 587
+    username: deep270804@gmail.com
+    password: abcd efgh ijkl mnop
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    enabled: true
 
   # ─── Web / Multipart ──────────────────────────────────────────────────────────
   servlet:
@@ -81,11 +82,17 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
       base-path: /actuator
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    mail:
+      enabled: false   # SMTP creds are placeholders; exclude from health check
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 # ─── SpringDoc / Swagger ──────────────────────────────────────────────────────
 springdoc:

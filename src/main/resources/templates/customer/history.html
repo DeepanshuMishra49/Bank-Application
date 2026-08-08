@@ -96,7 +96,7 @@
                                 ₹0
                             </span>
                         </td>
-                        <td th:text="'₹' + #numbers.formatDecimal(txn.balanceAfter, 1, 'COMMA', 2, 'POINT')">₹0</td>
+                        <td th:text="${txn?.balanceAfter != null ? '₹' + #numbers.formatDecimal(txn.balanceAfter, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹0</td>
                         <td>
                             <span class="badge"
                                   th:classappend="${txn.status?.name() == 'SUCCESS'} ? 'badge-success' : 'badge-danger'"
@@ -110,11 +110,11 @@
         </div>
 
         <!-- Pagination -->
-        <div class="pagination-wrapper" th:if="${transactions != null}">
+        <div class="pagination-wrapper" th:if="${transactions != null and transactions.totalPages > 0}">
             <div class="pagination-info"
-                 th:text="'Showing ' + (${transactions.number * transactions.size + 1}) + ' to ' + ${T(java.lang.Math).min((transactions.number + 1) * transactions.size, transactions.totalElements)} + ' of ' + ${transactions.totalElements} + ' transactions'">
+                 th:text="${'Showing ' + (transactions.totalElements > 0 ? (transactions.number * transactions.size + 1) : 0) + ' to ' + T(java.lang.Math).min((transactions.number + 1) * transactions.size, transactions.totalElements) + ' of ' + transactions.totalElements + ' transactions'}">
             </div>
-            <div class="pagination">
+            <div class="pagination" th:if="${transactions.totalPages > 0}">
                 <a class="page-btn" th:classappend="${transactions.first} ? 'disabled'"
                    th:href="@{/customer/history(page=${transactions.number - 1})}">‹</a>
                 <a class="page-btn" th:each="i : ${#numbers.sequence(0, transactions.totalPages - 1)}"

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="page-header">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1>KYC Management</h1>
+                <p class="subtitle">Review, verify and reject customer KYC documents</p>
+            </div>
+            <div class="flex gap-3">
+                <span class="badge badge-warning" style="font-size:0.9rem; padding:0.5rem 1rem;">
+                    <i class="bi bi-shield-exclamation"></i>
+                    <span th:text="${pendingCount + ' Pending'}">0 Pending</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="card mb-5" style="padding:0.75rem 1.25rem;">
+        <div class="flex gap-3 items-center">
+            <a th:href="@{/admin/kyc(filter='all')}"
+               th:classappend="${filter == 'all'} ? 'tab-active' : ''"
+               class="tab-btn">
+                <i class="bi bi-list-ul"></i> All KYC
+            </a>
+            <a th:href="@{/admin/kyc(filter='pending')}"
+               th:classappend="${filter == 'pending'} ? 'tab-active' : ''"
+               class="tab-btn">
+                <i class="bi bi-hourglass-split"></i> Pending
+                <span class="badge badge-warning ml-2" th:if="${pendingCount > 0}" th:text="${pendingCount}">0</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- KYC Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <span th:if="${filter == 'pending'}">Pending KYC Applications</span>
+                <span th:if="${filter != 'pending'}">All KYC Applications</span>
+            </div>
+            <span class="badge badge-primary" th:text="${kycEntries?.totalElements + ' records'}">0</span>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Document Type</th>
+                        <th>Document Number</th>
+                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th>Verified By</th>
+                        <th>Rejection Reason</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${kycEntries == null or kycEntries.isEmpty()}">
+                        <td colspan="8" class="table-empty">
+                            <div class="empty-icon">✅</div>
+                            <p th:if="${filter == 'pending'}">No pending KYC verifications!</p>
+                            <p th:if="${filter != 'pending'}">No KYC records found.</p>
+                        </td>
+                    </tr>
+                    <tr th:each="kyc : ${kycEntries}">
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <div class="user-avatar" style="width:36px;height:36px;font-size:0.875rem;"
+                                     th:text="${kyc.customerName?.substring(0,1)?.toUpperCase() ?: 'U'}">U</div>
+                                <div>
+                                    <div class="font-semibold" th:text="${kyc.customerName ?: '—'}">Name</div>
+                                    <div class="text-xs text-muted" th:text="${kyc.customerEmail ?: '—'}">email</div>
+                                    <div class="text-xs account-number" th:text="${kyc.customerId ?: '—'}">ID</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-primary"
+                                  th:text="${kyc.documentType?.name() ?: '—'}">—</span>
+                        </td>
+                        <td class="account-number text-sm" th:text="${kyc.documentNumber ?: '—'}">—</td>
+                        <td class="text-muted text-sm"
+                            th:text="${kyc.submittedAt != null ? #temporals.format(kyc.submittedAt, 'dd MMM yyyy') : '—'}">—</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${kyc.verified} ? 'badge-success' : (${kyc.rejectionReason != null} ? 'badge-danger' : 'badge-warning')"
+                                  th:text="${kyc.verified ? '✓ Verified' : (kyc.rejectionReason != null ? '✗ Rejected' : '⏳ Pending')}">—</span>
+                        </td>
+                        <td class="text-secondary text-sm" th:text="${kyc.verifiedBy ?: '—'}">—</td>
+                        <td class="text-sm text-muted" style="max-width:180px; word-break:break-word;"
+                            th:text="${kyc.rejectionReason ?: '—'}">—</td>
+                        <td>
+                            <div class="flex gap-1" th:unless="${kyc.verified}">
+                                <!-- Verify -->
+                                <form th:action="@{/admin/kyc/{id}/verify(id=${kyc.customerId})}"
+                                      method="post" style="display:inline;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn btn-success btn-sm btn-icon"
+                                            title="Verify KYC"
+                                            data-confirm="Verify KYC for this customer?">
+                                        <i class="bi bi-shield-check"></i>
+                                    </button>
+                                </form>
+                                <!-- Reject -->
+                                <button class="btn btn-danger btn-sm btn-icon"
+                                        title="Reject KYC"
+                                        th:data-customer-id="${kyc.customerId}"
+                                        onclick="openRejectModal(this.getAttribute('data-customer-id'))">
+                                    <i class="bi bi-shield-x"></i>
+                                </button>
+                            </div>
+                            <div th:if="${kyc.verified}">
+                                <span class="text-muted text-xs"
+                                      th:text="${kyc.verifiedAt != null ? #temporals.format(kyc.verifiedAt, 'dd MMM yyyy') : ''}"></span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper" th:if="${kycEntries != null and kycEntries.totalPages > 1}">
+            <div class="pagination-info"
+                 th:text="'Page ' + (${kycEntries.number + 1}) + ' of ' + ${kycEntries.totalPages}"></div>
+            <div class="pagination">
+                <a class="page-btn" th:classappend="${kycEntries.first} ? 'disabled'"
+                   th:href="@{/admin/kyc(page=${kycEntries.number - 1}, filter=${filter})}">‹</a>
+                <a class="page-btn" th:each="i : ${#numbers.sequence(0, kycEntries.totalPages - 1)}"
+                   th:if="${i >= kycEntries.number - 2 and i <= kycEntries.number + 2}"
+                   th:classappend="${i == kycEntries.number} ? 'active'"
+                   th:href="@{/admin/kyc(page=${i}, filter=${filter})}"
+                   th:text="${i + 1}">1</a>
+                <a class="page-btn" th:classappend="${kycEntries.last} ? 'disabled'"
+                   th:href="@{/admin/kyc(page=${kycEntries.number + 1}, filter=${filter})}">›</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal-overlay" id="rejectKycModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="bi bi-shield-x"></i> Reject KYC Application</div>
+                <button class="modal-close" onclick="BankingApp.Modal.close('rejectKycModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="alert" style="background:rgba(239,68,68,0.08);border-left:3px solid #EF4444;margin-bottom:1rem;">
+                    <i class="bi bi-exclamation-triangle-fill" style="color:#EF4444;"></i>
+                    <span style="color:#EF4444;font-size:0.875rem;">This will mark the customer's KYC as rejected and notify them to resubmit.</span>
+                </div>
+                <form id="rejectKycForm" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="form-group">
+                        <label class="form-label">Rejection Reason *</label>
+                        <select name="reason" class="form-select" required>
+                            <option value="Documents insufficient">Documents insufficient</option>
+                            <option value="Invalid or expired documents">Invalid or expired documents</option>
+                            <option value="Photo mismatch">Photo mismatch</option>
+                            <option value="Address proof invalid">Address proof invalid</option>
+                            <option value="Incomplete application">Incomplete application</option>
+                            <option value="Duplicate entry suspected">Duplicate entry suspected</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-3 justify-end">
+                        <button type="button" class="btn btn-secondary"
+                                onclick="BankingApp.Modal.close('rejectKycModal')">Cancel</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-shield-x"></i> Confirm Rejection
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+<th:block layout:fragment="scripts">
+<script>
+function openRejectModal(customerId) {
+    document.getElementById('rejectKycForm').action = '/admin/kyc/' + customerId + '/reject';
+    BankingApp.Modal.open('rejectKycModal');
+}
+</script>
+</th:block>
+</body>
+</html>

@@ -7,55 +7,55 @@
 <main layout:fragment="content">
     <div class="page-header">
         <h1>Admin Dashboard</h1>
-        <p class="subtitle">System-wide overview and analytics</p>
+        <p class="subtitle">System-wide overview and real-time analytics</p>
     </div>
 
-    <!-- Stat Cards -->
+    <!-- Stat Cards (clickable) -->
     <div class="stats-grid">
-        <div class="stat-card primary">
+        <a th:href="@{/admin/customers}" class="stat-card primary stat-card-link">
             <div class="stat-icon"><i class="bi bi-people"></i></div>
             <div class="stat-value" th:text="${dashboard?.totalCustomers ?: 0}">0</div>
             <div class="stat-label">Total Customers</div>
-        </div>
-        <div class="stat-card warning">
-            <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+        </a>
+        <a th:href="@{/admin/approvals}" class="stat-card warning stat-card-link">
+            <div class="stat-icon"><i class="bi bi-person-check"></i></div>
             <div class="stat-value" th:text="${dashboard?.pendingApprovals ?: 0}">0</div>
             <div class="stat-label">Pending Approvals</div>
-        </div>
-        <div class="stat-card success">
+        </a>
+        <a th:href="@{/admin/accounts}" class="stat-card success stat-card-link">
             <div class="stat-icon"><i class="bi bi-credit-card-2-front"></i></div>
             <div class="stat-value" th:text="${dashboard?.totalAccounts ?: 0}">0</div>
             <div class="stat-label">Total Accounts</div>
-        </div>
-        <div class="stat-card info">
+        </a>
+        <a th:href="@{/admin/accounts}" class="stat-card info stat-card-link">
             <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
             <div class="stat-value" th:text="${dashboard?.activeAccounts ?: 0}">0</div>
             <div class="stat-label">Active Accounts</div>
-        </div>
-        <div class="stat-card danger">
+        </a>
+        <a th:href="@{/admin/accounts}" class="stat-card danger stat-card-link">
             <div class="stat-icon"><i class="bi bi-slash-circle"></i></div>
             <div class="stat-value" th:text="${dashboard?.frozenAccounts ?: 0}">0</div>
             <div class="stat-label">Frozen Accounts</div>
-        </div>
-        <div class="stat-card secondary">
+        </a>
+        <a th:href="@{/admin/transactions}" class="stat-card secondary stat-card-link">
             <div class="stat-icon"><i class="bi bi-arrow-left-right"></i></div>
             <div class="stat-value" th:text="${dashboard?.totalTransactionsToday ?: 0}">0</div>
             <div class="stat-label">Transactions Today</div>
-        </div>
-        <div class="stat-card primary">
-            <div class="stat-icon"><i class="bi bi-bank"></i></div>
+        </a>
+        <a th:href="@{/admin/accounts}" class="stat-card primary stat-card-link">
+            <div class="stat-icon"><i class="bi bi-bank2"></i></div>
             <div class="stat-value text-xl"
                  th:text="${dashboard?.totalAssetsUnderManagement != null ? '₹' + #numbers.formatDecimal(dashboard.totalAssetsUnderManagement, 1, 'COMMA', 0, 'POINT') : '₹0'}">₹0</div>
-            <div class="stat-label">Total Assets</div>
-        </div>
-        <div class="stat-card warning">
+            <div class="stat-label">Total Assets Under Mgmt</div>
+        </a>
+        <a th:href="@{/admin/kyc}" class="stat-card warning stat-card-link">
             <div class="stat-icon"><i class="bi bi-shield-exclamation"></i></div>
             <div class="stat-value" th:text="${dashboard?.pendingKyc ?: 0}">0</div>
             <div class="stat-label">Pending KYC</div>
-        </div>
+        </a>
     </div>
 
-    <!-- Charts + Activity -->
+    <!-- Charts + Quick Actions -->
     <div class="grid-2">
         <div class="card">
             <div class="card-header">
@@ -72,42 +72,152 @@
                 <div class="card-title">Quick Actions</div>
             </div>
             <div class="quick-actions">
-                <a th:href="@{/admin/customers}" class="quick-action-btn">
-                    <div class="quick-action-icon" style="background: rgba(79,110,247,0.15); color: #4F6EF7;">
-                        <i class="bi bi-person-plus"></i>
+                <a th:href="@{/admin/approvals}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(245,158,11,0.15); color: #D4AF37;">
+                        <i class="bi bi-person-check"></i>
                     </div>
-                    <span class="qa-label">Manage Customers</span>
+                    <span class="qa-label">Pending Approvals</span>
+                </a>
+                <a th:href="@{/admin/kyc}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(79,110,247,0.15); color: #4F6EF7;">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <span class="qa-label">KYC Management</span>
+                </a>
+                <a th:href="@{/admin/customers}" class="quick-action-btn">
+                    <div class="quick-action-icon" style="background: rgba(16,185,129,0.15); color: #10B981;">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <span class="qa-label">All Customers</span>
                 </a>
                 <a th:href="@{/admin/accounts}" class="quick-action-btn">
-                    <div class="quick-action-icon" style="background: rgba(16,185,129,0.15); color: #10B981;">
+                    <div class="quick-action-icon" style="background: rgba(99,102,241,0.15); color: #6366F1;">
                         <i class="bi bi-credit-card-2-front"></i>
                     </div>
                     <span class="qa-label">Manage Accounts</span>
                 </a>
                 <a th:href="@{/admin/transactions}" class="quick-action-btn">
-                    <div class="quick-action-icon" style="background: rgba(245,158,11,0.15); color: #F59E0B;">
+                    <div class="quick-action-icon" style="background: rgba(239,68,68,0.15); color: #EF4444;">
                         <i class="bi bi-arrow-left-right"></i>
                     </div>
                     <span class="qa-label">All Transactions</span>
                 </a>
                 <a th:href="@{/admin/employees}" class="quick-action-btn">
-                    <div class="quick-action-icon" style="background: rgba(99,102,241,0.15); color: #6366F1;">
+                    <div class="quick-action-icon" style="background: rgba(14,165,233,0.15); color: #0EA5E9;">
                         <i class="bi bi-person-badge"></i>
                     </div>
                     <span class="qa-label">Manage Employees</span>
                 </a>
-                <a th:href="@{/swagger-ui.html}" target="_blank" class="quick-action-btn">
-                    <div class="quick-action-icon" style="background: rgba(14,165,233,0.15); color: #0EA5E9;">
-                        <i class="bi bi-code-square"></i>
-                    </div>
-                    <span class="qa-label">API Docs</span>
-                </a>
-                <a th:href="@{/actuator/health}" target="_blank" class="quick-action-btn">
-                    <div class="quick-action-icon" style="background: rgba(239,68,68,0.15); color: #EF4444;">
-                        <i class="bi bi-activity"></i>
-                    </div>
-                    <span class="qa-label">System Health</span>
-                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Approvals Preview -->
+    <div class="grid-2" style="margin-top:0;">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="bi bi-person-check" style="color:var(--warning);"></i>
+                    Recent Pending Approvals
+                </div>
+                <a th:href="@{/admin/approvals}" class="btn btn-secondary btn-sm">View All</a>
+            </div>
+            <div th:if="${recentPendingApprovals == null or recentPendingApprovals.isEmpty()}"
+                 style="padding:1.5rem;text-align:center;" class="text-muted text-sm">
+                <i class="bi bi-check2-circle" style="font-size:1.5rem;color:var(--success);"></i>
+                <p style="margin-top:0.5rem;">No pending approvals!</p>
+            </div>
+            <div class="table-wrapper" th:unless="${recentPendingApprovals == null or recentPendingApprovals.isEmpty()}">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>KYC</th>
+                            <th>Registered</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cust : ${recentPendingApprovals}">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="user-avatar" style="width:30px;height:30px;font-size:0.75rem;"
+                                         th:text="${cust.firstName?.substring(0,1)?.toUpperCase() ?: 'U'}">U</div>
+                                    <div>
+                                        <div class="font-semibold text-sm" th:text="${cust.fullName}">—</div>
+                                        <div class="text-xs text-muted" th:text="${cust.customerId}">—</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${cust.kycVerified} ? 'badge-success' : 'badge-warning'"
+                                      th:text="${cust.kycVerified ? '✓' : '⏳'}">—</span>
+                            </td>
+                            <td class="text-muted text-xs"
+                                th:text="${cust.createdAt != null ? #temporals.format(cust.createdAt, 'dd MMM') : '—'}">—</td>
+                            <td>
+                                <a th:href="@{/admin/customers/{id}(id=${cust.customerId})}"
+                                   class="btn btn-secondary btn-sm btn-icon">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pending KYC Preview -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="bi bi-shield-exclamation" style="color:var(--warning);"></i>
+                    Recent Pending KYC
+                </div>
+                <a th:href="@{/admin/kyc(filter='pending')}" class="btn btn-secondary btn-sm">View All</a>
+            </div>
+            <div th:if="${recentPendingKyc == null or recentPendingKyc.isEmpty()}"
+                 style="padding:1.5rem;text-align:center;" class="text-muted text-sm">
+                <i class="bi bi-shield-check" style="font-size:1.5rem;color:var(--success);"></i>
+                <p style="margin-top:0.5rem;">All KYC is verified!</p>
+            </div>
+            <div class="table-wrapper" th:unless="${recentPendingKyc == null or recentPendingKyc.isEmpty()}">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Document</th>
+                            <th>Submitted</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="kyc : ${recentPendingKyc}">
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="user-avatar" style="width:30px;height:30px;font-size:0.75rem;"
+                                         th:text="${kyc.customerName?.substring(0,1)?.toUpperCase() ?: 'U'}">U</div>
+                                    <div>
+                                        <div class="font-semibold text-sm" th:text="${kyc.customerName ?: '—'}">—</div>
+                                        <div class="text-xs text-muted" th:text="${kyc.customerId ?: '—'}">—</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-sm">
+                                <span class="badge badge-primary text-xs"
+                                      th:text="${kyc.documentType?.name() ?: '—'}">—</span>
+                            </td>
+                            <td class="text-muted text-xs"
+                                th:text="${kyc.submittedAt != null ? #temporals.format(kyc.submittedAt, 'dd MMM') : '—'}">—</td>
+                            <td>
+                                <a th:href="@{/admin/kyc}" class="btn btn-success btn-sm btn-icon">
+                                    <i class="bi bi-shield-check"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

@@ -48,9 +48,9 @@
                         <td>
                             <span class="txn-amount"
                                   th:classappend="${txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN')} ? 'credit' : 'debit'"
-                                  th:text="'₹' + #numbers.formatDecimal(txn.amount, 1, 'COMMA', 2, 'POINT')">₹0</span>
+                                  th:text="${txn?.amount != null ? '₹' + #numbers.formatDecimal(txn.amount, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹0</span>
                         </td>
-                        <td th:text="'₹' + #numbers.formatDecimal(txn.balanceAfter, 1, 'COMMA', 2, 'POINT')">₹0</td>
+                        <td th:text="${txn?.balanceAfter != null ? '₹' + #numbers.formatDecimal(txn.balanceAfter, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹0</td>
                         <td class="text-secondary text-sm" th:text="${txn.description ?: '—'}">—</td>
                         <td>
                             <span class="badge"

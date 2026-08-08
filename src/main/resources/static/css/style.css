@@ -1645,3 +1645,239 @@ button, a, input, select, textarea {
 .toast.error   { border-left: 3px solid var(--danger); }
 .toast.warning { border-left: 3px solid var(--warning); }
 .toast.info    { border-left: 3px solid var(--primary); }
+
+/* =================================================================
+   BANKING THEME ENHANCEMENTS
+   Professional navy/gold banking aesthetic additions
+   ================================================================= */
+
+/* ── Banking Color Palette Overrides ─────────────────────────── */
+:root {
+  --bank-navy:       #0A1628;
+  --bank-navy-mid:   #132040;
+  --bank-navy-light: #1E3055;
+  --bank-gold:       #D4AF37;
+  --bank-gold-light: #F0D060;
+  --bank-gold-muted: rgba(212, 175, 55, 0.15);
+  --accent: var(--bank-gold);
+}
+
+/* ── Sidebar — Banking Navy Theme ────────────────────────────── */
+.sidebar {
+  background: linear-gradient(180deg, var(--bank-navy) 0%, var(--bank-navy-mid) 100%);
+  border-right: 1px solid rgba(212,175,55,0.15);
+}
+
+.sidebar-brand {
+  border-bottom: 1px solid rgba(212,175,55,0.2);
+  background: linear-gradient(135deg, rgba(212,175,55,0.08), transparent);
+}
+
+.sidebar-logo {
+  background: linear-gradient(135deg, var(--bank-gold), var(--bank-gold-light));
+  color: var(--bank-navy);
+  font-size: 1.1rem;
+  font-weight: 900;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(212,175,55,0.3);
+}
+
+.sidebar-brand-text strong {
+  color: var(--bank-gold-light);
+  font-size: 1rem;
+  letter-spacing: 0.3px;
+}
+
+.sidebar-brand-text span {
+  color: rgba(212,175,55,0.5);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sidebar-section-label {
+  color: rgba(212,175,55,0.45);
+  font-size: 0.62rem;
+  letter-spacing: 1.5px;
+}
+
+.nav-item {
+  color: rgba(255,255,255,0.6);
+  border-radius: var(--radius-sm);
+}
+
+.nav-item:hover {
+  background: rgba(212,175,55,0.08);
+  color: var(--bank-gold-light);
+}
+
+.nav-item.active {
+  background: rgba(212,175,55,0.12);
+  color: var(--bank-gold);
+}
+
+.nav-item.active::before {
+  background: var(--bank-gold);
+}
+
+.sidebar-footer {
+  border-top: 1px solid rgba(212,175,55,0.15);
+}
+
+.user-mini-card {
+  background: rgba(212,175,55,0.06);
+  border: 1px solid rgba(212,175,55,0.15);
+}
+
+/* ── Topbar Enhancements ──────────────────────────────────────── */
+.topbar {
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* User chip in topbar */
+.topbar-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  cursor: default;
+}
+
+.topbar-username {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Clickable Stat Cards ─────────────────────────────────────── */
+.stat-card-link {
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+}
+
+.stat-card-link:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md), 0 0 0 1px var(--bank-gold-muted);
+}
+
+.stat-card-link .stat-value,
+.stat-card-link .stat-label,
+.stat-card-link .stat-icon {
+  /* Preserve text colors inside linked stat cards */
+  color: inherit;
+}
+
+.stat-card-link .stat-value { color: var(--text-primary); }
+.stat-card-link .stat-label { color: var(--text-secondary); }
+
+/* ── Tab Navigation (KYC filter) ─────────────────────────────── */
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+
+.tab-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.tab-btn.tab-active {
+  background: rgba(var(--primary-rgb), 0.15);
+  color: var(--primary-light);
+  border-color: rgba(var(--primary-rgb), 0.25);
+}
+
+.ml-2 { margin-left: 0.5rem; }
+
+/* ── Detail Row (Customer Detail Page) ───────────────────────── */
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-row:last-child { border-bottom: none; }
+
+.detail-label {
+  min-width: 130px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-top: 2px;
+}
+
+.detail-value {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+/* ── Text link utility ────────────────────────────────────────── */
+.text-link {
+  color: var(--primary-light);
+  text-decoration: underline;
+  font-size: inherit;
+}
+
+.text-link:hover { color: var(--accent); }
+
+/* ── Auth page banking enhancement ───────────────────────────── */
+.auth-left {
+  background: linear-gradient(160deg, var(--bank-navy) 0%, var(--bank-navy-mid) 60%, #0D1B2A 100%);
+}
+
+.auth-brand .bank-logo {
+  background: linear-gradient(135deg, var(--bank-gold), var(--bank-gold-light));
+  color: var(--bank-navy);
+  box-shadow: 0 4px 20px rgba(212,175,55,0.35);
+}
+
+/* ── Primary button — gold accent for banking ─────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(79,110,247,0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  box-shadow: 0 4px 16px rgba(79,110,247,0.4);
+  transform: translateY(-1px);
+}
+
+/* ── Balance card — banking gold gradient variant ─────────────── */
+.balance-card {
+  background: linear-gradient(135deg, var(--bank-navy-mid) 0%, var(--bank-navy-light) 60%, #1B3A6B 100%);
+  border: 1px solid rgba(212,175,55,0.2);
+}
+
+/* ── Sidebar backdrop for mobile ─────────────────────────────── */
+@media (max-width: 768px) {
+  .topbar-username { display: none; }
+}
+

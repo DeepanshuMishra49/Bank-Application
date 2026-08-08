@@ -5,6 +5,7 @@ import com.banking.dto.request.CreateCustomerRequest;
 import com.banking.dto.response.AccountResponse;
 import com.banking.dto.response.CustomerResponse;
 import com.banking.dto.response.DashboardResponse;
+import com.banking.dto.response.KycDetailResponse;
 import com.banking.dto.response.TransactionResponse;
 import com.banking.security.CustomUserDetails;
 import com.banking.service.*;
@@ -37,13 +38,20 @@ public class AdminController {
     private final TransactionService transactionService;
     private final DashboardService dashboardService;
     private final EmployeeService employeeService;
+    private final KycService kycService;
 
     // ─── Dashboard ────────────────────────────────────────────────────────────
 
     @GetMapping({"/", "/dashboard"})
     public String dashboard(Model model) {
         DashboardResponse dash = dashboardService.getAdminDashboard();
+        // Load small previews for dashboard quick-view panels
+        Page<CustomerResponse> pendingApprovals = customerService.getPendingApprovals(PageRequest.of(0, 5));
+        Page<KycDetailResponse> pendingKyc = kycService.getPendingKyc(PageRequest.of(0, 5));
+
         model.addAttribute("dashboard", dash);
+        model.addAttribute("recentPendingApprovals", pendingApprovals.getContent());
+        model.addAttribute("recentPendingKyc", pendingKyc.getContent());
         model.addAttribute("pageTitle", "Admin Dashboard");
         return "admin/dashboard";
     }
@@ -130,6 +138,111 @@ public class AdminController {
         model.addAttribute("customer", customer);
         model.addAttribute("pageTitle", "Customer Details — " + customer.fullName());
         return "admin/customer-detail";
+    }
+
+    // ─── Approvals (dedicated page) ───────────────────────────────────────────
+
+    @GetMapping("/approvals")
+    public String pendingApprovals(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            Model model) {
+
+        Page<CustomerResponse> pending = customerService.getPendingApprovals(
+                PageRequest.of(page, size, Sort.by("createdAt").descending()));
+
+        model.addAttribute("pendingCustomers", pending);
+        model.addAttribute("pageTitle", "Pending Customer Approvals");
+        return "admin/approvals";
+    }
+
+    @PostMapping("/approvals/{customerId}/approve")
+    public String approveFromApprovals(
+            @PathVariable String customerId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            customerService.approveCustomer(customerId, userDetails.getUsername());
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_SUCCESS,
+                    "Customer " + customerId + " approved successfully.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_ERROR, e.getMessage());
+        }
+        return "redirect:/admin/approvals";
+    }
+
+    @PostMapping("/approvals/{customerId}/reject")
+    public String rejectFromApprovals(
+            @PathVariable String customerId,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            customerService.deleteCustomer(customerId);
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_SUCCESS,
+                    "Customer " + customerId + " rejected and deactivated.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_ERROR, e.getMessage());
+        }
+        return "redirect:/admin/approvals";
+    }
+
+    // ─── KYC Management ───────────────────────────────────────────────────────
+
+    @GetMapping("/kyc")
+    public String kycManagement(
+            @RequestParam(defaultValue = "all") String filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            Model model) {
+
+        Page<KycDetailResponse> kycEntries;
+        if ("pending".equals(filter)) {
+            kycEntries = kycService.getPendingKyc(PageRequest.of(page, size, Sort.by("createdAt").descending()));
+        } else {
+            kycEntries = kycService.getAllKyc(PageRequest.of(page, size, Sort.by("createdAt").descending()));
+        }
+
+        long pendingCount = kycService.getPendingKyc(PageRequest.of(0, 1)).getTotalElements();
+
+        model.addAttribute("kycEntries", kycEntries);
+        model.addAttribute("filter", filter);
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("pageTitle", "KYC Management");
+        return "admin/kyc";
+    }
+
+    @PostMapping("/kyc/{customerId}/verify")
+    public String verifyKyc(
+            @PathVariable String customerId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            kycService.verifyKyc(customerId, userDetails.getUsername());
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_SUCCESS,
+                    "KYC verified for customer " + customerId);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_ERROR, e.getMessage());
+        }
+        return "redirect:/admin/kyc";
+    }
+
+    @PostMapping("/kyc/{customerId}/reject")
+    public String rejectKyc(
+            @PathVariable String customerId,
+            @RequestParam(defaultValue = "Documents insufficient") String reason,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            kycService.rejectKyc(customerId, reason, userDetails.getUsername());
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_SUCCESS,
+                    "KYC rejected for customer " + customerId);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_ERROR, e.getMessage());
+        }
+        return "redirect:/admin/kyc";
     }
 
     // ─── Accounts ─────────────────────────────────────────────────────────────

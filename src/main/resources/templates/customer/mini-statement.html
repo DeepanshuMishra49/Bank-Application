@@ -48,7 +48,7 @@
                     <div class="flex justify-between">
                         <span class="text-muted text-sm">Balance</span>
                         <span class="font-bold text-success"
-                              th:text="'₹' + #numbers.formatDecimal(selectedAccountDetails.balance, 1, 'COMMA', 2, 'POINT')">₹0</span>
+                              th:text="${selectedAccountDetails?.balance != null ? '₹' + #numbers.formatDecimal(selectedAccountDetails.balance, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹0</span>
                     </div>
                 </div>
             </div>
@@ -78,7 +78,7 @@
                 <div class="ms-details">
                     <div class="ms-type" th:text="${txn.transactionType}">TYPE</div>
                     <div class="ms-date" th:text="${#temporals.format(txn.createdAt, 'dd MMM yyyy HH:mm')}">Date</div>
-                    <div class="ms-ref" th:text="'Ref: ' + ${txn.referenceNumber}">Ref</div>
+                    <div class="ms-ref" th:text="${'Ref: ' + (txn.referenceNumber ?: '—')}">Ref</div>
                 </div>
                 <div class="ms-amount"
                      th:classappend="${txn.transactionType?.name()?.contains('DEPOSIT') or txn.transactionType?.name()?.contains('IN')} ? 'text-success' : 'text-danger'"

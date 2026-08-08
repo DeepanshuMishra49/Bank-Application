@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<body>
+<main layout:fragment="content">
+    <div class="page-header">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1>Pending Approvals</h1>
+                <p class="subtitle">Review and approve new customer registration requests</p>
+            </div>
+            <span class="badge badge-warning" style="font-size:0.9rem; padding:0.5rem 1rem;">
+                <i class="bi bi-hourglass-split"></i>
+                <span th:text="${pendingCustomers?.totalElements + ' awaiting approval'}">0</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${pendingCustomers == null or pendingCustomers.isEmpty()}" class="card" style="text-align:center;padding:3rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
+        <h3 style="margin-bottom:0.5rem;">All caught up!</h3>
+        <p class="text-muted">No customer registrations are pending approval at this time.</p>
+        <a th:href="@{/admin/customers}" class="btn btn-primary" style="margin-top:1.5rem;">
+            <i class="bi bi-people"></i> View All Customers
+        </a>
+    </div>
+
+    <!-- Approvals Table -->
+    <div class="card" th:unless="${pendingCustomers == null or pendingCustomers.isEmpty()}">
+        <div class="card-header">
+            <div class="card-title">Customer Registration Requests</div>
+            <span class="badge badge-warning" th:text="${pendingCustomers?.totalElements + ' pending'}">0</span>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Customer ID</th>
+                        <th>Phone</th>
+                        <th>KYC Status</th>
+                        <th>Registered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="cust : ${pendingCustomers}">
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <div class="user-avatar" style="width:40px;height:40px;font-size:1rem;"
+                                     th:text="${cust.firstName?.substring(0,1)?.toUpperCase() ?: 'U'}">U</div>
+                                <div>
+                                    <div class="font-semibold" th:text="${cust.fullName}">Name</div>
+                                    <div class="text-xs text-muted" th:text="${cust.email}">email</div>
+                                    <div class="text-xs text-muted" th:if="${cust.occupation}" th:text="${cust.occupation}">—</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="account-number text-sm" th:text="${cust.customerId}">—</td>
+                        <td class="text-secondary text-sm" th:text="${cust.phone ?: '—'}">—</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${cust.kycVerified} ? 'badge-success' : 'badge-warning'"
+                                  th:text="${cust.kycVerified ? '✓ KYC Done' : '⏳ KYC Pending'}">—</span>
+                        </td>
+                        <td class="text-muted text-sm"
+                            th:text="${cust.createdAt != null ? #temporals.format(cust.createdAt, 'dd MMM yyyy') : '—'}">—</td>
+                        <td>
+                            <div class="flex gap-2">
+                                <!-- Approve -->
+                                <form th:action="@{/admin/approvals/{id}/approve(id=${cust.customerId})}"
+                                      method="post" style="display:inline;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn btn-success btn-sm"
+                                            data-confirm="Approve this customer registration?">
+                                        <i class="bi bi-check2-circle"></i> Approve
+                                    </button>
+                                </form>
+                                <!-- Reject -->
+                                <form th:action="@{/admin/approvals/{id}/reject(id=${cust.customerId})}"
+                                      method="post" style="display:inline;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                            data-confirm="Reject this customer? Their account will be deactivated.">
+                                        <i class="bi bi-x-circle"></i> Reject
+                                    </button>
+                                </form>
+                                <!-- View Details -->
+                                <a th:href="@{/admin/customers/{id}(id=${cust.customerId})}"
+                                   class="btn btn-secondary btn-sm btn-icon" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper" th:if="${pendingCustomers != null and pendingCustomers.totalPages > 1}">
+            <div class="pagination-info"
+                 th:text="'Page ' + (${pendingCustomers.number + 1}) + ' of ' + ${pendingCustomers.totalPages}"></div>
+            <div class="pagination">
+                <a class="page-btn" th:classappend="${pendingCustomers.first} ? 'disabled'"
+                   th:href="@{/admin/approvals(page=${pendingCustomers.number - 1})}">‹</a>
+                <a class="page-btn" th:each="i : ${#numbers.sequence(0, pendingCustomers.totalPages - 1)}"
+                   th:if="${i >= pendingCustomers.number - 2 and i <= pendingCustomers.number + 2}"
+                   th:classappend="${i == pendingCustomers.number} ? 'active'"
+                   th:href="@{/admin/approvals(page=${i})}"
+                   th:text="${i + 1}">1</a>
+                <a class="page-btn" th:classappend="${pendingCustomers.last} ? 'disabled'"
+                   th:href="@{/admin/approvals(page=${pendingCustomers.number + 1})}">›</a>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.banking.service.impl;
 
 import com.banking.dto.request.KycVerificationRequest;
+import com.banking.dto.response.KycDetailResponse;
 import com.banking.entity.Customer;
 import com.banking.entity.KycDetail;
 import com.banking.exception.UserNotFoundException;
@@ -9,6 +10,8 @@ import com.banking.repository.KycRepository;
 import com.banking.service.KycService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,7 +54,11 @@ public class KycServiceImpl implements KycService {
                 .orElseThrow(() -> new UserNotFoundException("customerId", customerId));
 
         KycDetail kyc = kycRepository.findByCustomerId(customer.getId())
-                .orElseThrow(() -> new UserNotFoundException("KYC not found for customer", customerId));
+                .orElseGet(() -> KycDetail.builder()
+                        .customer(customer)
+                        .documentType(com.banking.enums.DocumentType.AADHAAR_CARD)
+                        .documentNumber("DOC-" + customerId)
+                        .build());
 
         kyc.setVerified(true);
         kyc.setVerifiedBy(verifiedBy);
@@ -69,7 +76,11 @@ public class KycServiceImpl implements KycService {
                 .orElseThrow(() -> new UserNotFoundException("customerId", customerId));
 
         KycDetail kyc = kycRepository.findByCustomerId(customer.getId())
-                .orElseThrow(() -> new UserNotFoundException("KYC not found for customer", customerId));
+                .orElseGet(() -> KycDetail.builder()
+                        .customer(customer)
+                        .documentType(com.banking.enums.DocumentType.AADHAAR_CARD)
+                        .documentNumber("DOC-" + customerId)
+                        .build());
 
         kyc.setVerified(false);
         kyc.setRejectionReason(rejectionReason);
@@ -84,5 +95,42 @@ public class KycServiceImpl implements KycService {
     public KycDetail getKycByCustomerId(UUID customerId) {
         return kycRepository.findByCustomerId(customerId)
                 .orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<KycDetailResponse> getAllKyc(Pageable pageable) {
+        return kycRepository.findAll(pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<KycDetailResponse> getPendingKyc(Pageable pageable) {
+        return kycRepository.findByVerified(false, pageable).map(this::toResponse);
+    }
+
+    // ─── Mapper ────────────────────────────────────────────────────────────────
+
+    private KycDetailResponse toResponse(KycDetail kyc) {
+        Customer c = kyc.getCustomer();
+        String custId    = c != null ? c.getCustomerId() : null;
+        String custName  = c != null ? c.getFullName()   : null;
+        String custEmail = (c != null && c.getUser() != null) ? c.getUser().getEmail() : null;
+
+        return new KycDetailResponse(
+                kyc.getId(),
+                custId,
+                custName,
+                custEmail,
+                kyc.getDocumentType(),
+                kyc.getDocumentNumber(),
+                kyc.getDocumentFrontUrl(),
+                kyc.getDocumentBackUrl(),
+                kyc.isVerified(),
+                kyc.getVerifiedBy(),
+                kyc.getVerifiedAt(),
+                kyc.getRejectionReason(),
+                kyc.getCreatedAt()
+        );
     }
 }

@@ -96,7 +96,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/login", "/register", "/error", "/access-denied",
                     "/css/**", "/js/**", "/images/**", "/favicon.ico",
-                    "/actuator/health",
+                    "/actuator/health", "/actuator/prometheus",
                     "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                 ).permitAll()
                 // Admin-only

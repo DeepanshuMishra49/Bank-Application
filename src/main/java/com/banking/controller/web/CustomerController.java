@@ -44,6 +44,41 @@ public class CustomerController {
     private final DashboardService dashboardService;
     private final UserService userService;
     private final FileStorageService fileStorageService;
+    private final KycService kycService;
+
+    // ─── KYC Submission ───────────────────────────────────────────────────────
+
+    @GetMapping("/kyc")
+    public String kycPage(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
+        CustomerResponse customer = customerService.findByUserId(userDetails.getUserId());
+        var kycDetail = kycService.getKycByCustomerId(customer.id());
+
+        model.addAttribute("customer", customer);
+        model.addAttribute("kycDetail", kycDetail);
+        model.addAttribute("pageTitle", "KYC Verification");
+        return "customer/kyc";
+    }
+
+    @PostMapping("/kyc/submit")
+    public String submitKyc(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam com.banking.enums.DocumentType documentType,
+            @RequestParam String documentNumber,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            CustomerResponse customer = customerService.findByUserId(userDetails.getUserId());
+            com.banking.dto.request.KycVerificationRequest request = new com.banking.dto.request.KycVerificationRequest(
+                    customer.customerId(), documentType, documentNumber, false, null
+            );
+            kycService.submitKyc(request);
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_SUCCESS,
+                    "KYC documents submitted successfully! Your application is under review.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute(BankingConstants.FLASH_ERROR, e.getMessage());
+        }
+        return "redirect:/customer/kyc";
+    }
 
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
@@ -62,6 +97,7 @@ public class CustomerController {
     public String profilePage(@AuthenticationPrincipal CustomUserDetails userDetails, Model model) {
         CustomerResponse customer = customerService.findByUserId(userDetails.getUserId());
         model.addAttribute("customer", customer);
+        model.addAttribute("accounts", accountService.getAccountsByCustomerId(customer.id()));
         model.addAttribute("updateRequest", new UpdateProfileRequest(
                 customer.firstName(), customer.lastName(), customer.phone(),
                 customer.gender(), customer.occupation(), customer.annualIncome(),

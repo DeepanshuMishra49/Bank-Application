@@ -35,10 +35,10 @@
     <!-- ── SIDEBAR ───────────────────────────────────────── -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="sidebar-logo">🏦</div>
+            <div class="sidebar-logo"><i class="bi bi-bank2"></i></div>
             <div class="sidebar-brand-text">
-                <strong>BankPortal</strong>
-                <span>Management System</span>
+                <strong>SecureBank</strong>
+                <span>Banking Portal</span>
             </div>
         </div>
 
@@ -85,6 +85,10 @@
                     <span class="nav-icon"><i class="bi bi-person-circle"></i></span>
                     My Profile
                 </a>
+                <a th:href="@{/customer/kyc}" class="nav-item">
+                    <span class="nav-icon"><i class="bi bi-shield-check"></i></span>
+                    KYC Verification
+                </a>
                 <a th:href="@{/customer/change-password}" class="nav-item">
                     <span class="nav-icon"><i class="bi bi-shield-lock"></i></span>
                     Change Password
@@ -115,6 +119,16 @@
                 <a th:href="@{/admin/employees}" class="nav-item">
                     <span class="nav-icon"><i class="bi bi-person-badge"></i></span>
                     Employees
+                </a>
+
+                <div class="sidebar-section-label mt-3">Verification</div>
+                <a th:href="@{/admin/approvals}" class="nav-item">
+                    <span class="nav-icon"><i class="bi bi-person-check"></i></span>
+                    Pending Approvals
+                </a>
+                <a th:href="@{/admin/kyc}" class="nav-item">
+                    <span class="nav-icon"><i class="bi bi-shield-check"></i></span>
+                    KYC Management
                 </a>
 
                 <div class="sidebar-section-label mt-3">System</div>
@@ -189,10 +203,17 @@
                     <i class="bi bi-sun-fill"></i>
                 </button>
 
+                <!-- User chip -->
+                <div class="topbar-user-chip">
+                    <div class="user-avatar" style="width:30px;height:30px;font-size:0.8rem;"
+                         th:text="${#authentication.name?.substring(0,1)?.toUpperCase()}">A</div>
+                    <span class="topbar-username" th:text="${#authentication.name}">User</span>
+                </div>
+
                 <!-- Logout -->
                 <form th:action="@{/logout}" method="post" style="display:inline;">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" class="topbar-icon-btn" title="Logout">
+                    <button type="submit" class="topbar-icon-btn" title="Sign Out">
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </form>

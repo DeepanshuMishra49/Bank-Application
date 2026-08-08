@@ -36,7 +36,7 @@
             </div>
 
             <div class="balance-amount text-2xl mb-1"
-                 th:text="'₹' + #numbers.formatDecimal(account.balance, 1, 'COMMA', 2, 'POINT')">₹0.00</div>
+                 th:text="${account?.balance != null ? '₹' + #numbers.formatDecimal(account.balance, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹0.00</div>
             <div class="text-muted text-sm mb-4">Available Balance</div>
 
             <div class="divider"></div>
@@ -56,12 +56,12 @@
                 <div>
                     <div class="text-xs text-muted">Daily Transfer Limit</div>
                     <div class="text-sm font-semibold"
-                         th:text="'₹' + #numbers.formatDecimal(account.dailyTransferLimit, 1, 'COMMA', 2, 'POINT')">₹1,00,000</div>
+                         th:text="${account?.dailyTransferLimit != null ? '₹' + #numbers.formatDecimal(account.dailyTransferLimit, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹1,00,000</div>
                 </div>
                 <div>
                     <div class="text-xs text-muted">Min. Balance</div>
                     <div class="text-sm font-semibold"
-                         th:text="'₹' + #numbers.formatDecimal(account.minimumBalance, 1, 'COMMA', 2, 'POINT')">₹500</div>
+                         th:text="${account?.minimumBalance != null ? '₹' + #numbers.formatDecimal(account.minimumBalance, 1, 'COMMA', 2, 'POINT') : '₹0.00'}">₹500</div>
                 </div>
             </div>
 
@@ -69,12 +69,12 @@
                 <div class="text-xs text-muted mb-1">Daily Limit Used</div>
                 <div class="progress-bar">
                     <div class="progress-fill"
-                         th:classappend="${(account.transferredToday.doubleValue() / account.dailyTransferLimit.doubleValue()) > 0.8} ? 'danger' : 'primary'"
-                         th:style="'width: ' + ${T(java.lang.Math).min(100, (account.transferredToday.doubleValue() / account.dailyTransferLimit.doubleValue()) * 100)} + '%'"></div>
+                         th:classappend="${account.transferredToday != null and account.dailyTransferLimit != null and account.dailyTransferLimit.doubleValue() > 0 and (account.transferredToday.doubleValue() / account.dailyTransferLimit.doubleValue()) > 0.8} ? 'danger' : 'primary'"
+                         th:style="'width: ' + ${account.transferredToday != null and account.dailyTransferLimit != null and account.dailyTransferLimit.doubleValue() > 0 ? T(java.lang.Math).min(100, (account.transferredToday.doubleValue() / account.dailyTransferLimit.doubleValue()) * 100) : 0} + '%'"></div>
                 </div>
                 <div class="flex justify-between mt-1 text-xs text-muted">
-                    <span th:text="'Used: ₹' + #numbers.formatDecimal(account.transferredToday, 1, 'COMMA', 2, 'POINT')">Used: ₹0</span>
-                    <span th:text="'Limit: ₹' + #numbers.formatDecimal(account.dailyTransferLimit, 1, 'COMMA', 2, 'POINT')">Limit: ₹1,00,000</span>
+                    <span th:text="${account?.transferredToday != null ? 'Used: ₹' + #numbers.formatDecimal(account.transferredToday, 1, 'COMMA', 2, 'POINT') : 'Used: ₹0'}">Used: ₹0</span>
+                    <span th:text="${account?.dailyTransferLimit != null ? 'Limit: ₹' + #numbers.formatDecimal(account.dailyTransferLimit, 1, 'COMMA', 2, 'POINT') : 'Limit: ₹0'}">Limit: ₹1,00,000</span>
                 </div>
             </div>
 

@@ -22,9 +22,11 @@ services:
     restart: unless-stopped
 
   # ── Spring Boot Application ─────────────────────────────────
-  app:
+  app-banking:
     image: deep270804/bank_app:latest
     container_name: banking-app
+    volumes:
+       - ./global-bundle.pem:/app/global-bundle.pem
     environment:
       OTEL_SERVICE_NAME: banking-service
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
@@ -32,7 +34,7 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_LOGS_EXPORTER: otlp
       OTEL_METRICS_EXPORTER: otlp  
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banking_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database-1.ce58ycum4znw.us-east-1.rds.amazonaws.com:5432/banking_db?sslmode=verify-full&sslrootcert=/app/global-bundle.pem
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgresnew
       SPRING_PROFILES_ACTIVE: prod
@@ -101,9 +103,13 @@ services:
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
     ports:
       - "16686:16686"
       - "14250:14250"
+      - "4317"      # OTLP gRPC (internal only)
+      - "4318"      # OTLP HTTP (internal only)
     networks:
       - banking-network
     restart: unless-stopped
@@ -120,6 +126,8 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards/files
     depends_on:
       - prometheus
       - loki
@@ -130,6 +138,10 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local    
+  grafana_data:
     driver: local
 
 networks:
