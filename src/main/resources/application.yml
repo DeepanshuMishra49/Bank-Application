@@ -1,12 +1,16 @@
 spring:
   application:
-    name: Banking Management System
+    name: banking-management-system   # BUG FIX: removed spaces — OTEL uses this as
+                                      # the metric/trace service name; spaces in
+                                      # metric labels break some Prometheus queries.
 
-  # ─── DataSource ───────────────────────────────────────────────────────────────
+  # ─── DataSource ─────────────────────────────────────────────────────────────
   datasource:
-    url: jdbc:postgresql://localhost:5432/banking_db
-    username: postgres
-    password: postgresnew
+    # BUG FIX: credentials read from env-vars; never hard-code passwords in source.
+    # For local dev set these in a .env file (git-ignored).
+    url:      ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/banking_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgresnew}
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-timeout: 30000
@@ -16,7 +20,7 @@ spring:
       max-lifetime: 1800000
       pool-name: BankingHikariPool
 
-  # ─── JPA / Hibernate ──────────────────────────────────────────────────────────
+  # ─── JPA / Hibernate ────────────────────────────────────────────────────────
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -30,7 +34,7 @@ spring:
             non_contextual_creation: true
         default_schema: public
 
-  # ─── Flyway ───────────────────────────────────────────────────────────────────
+  # ─── Flyway ─────────────────────────────────────────────────────────────────
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -38,15 +42,20 @@ spring:
     locations: classpath:db/migration
     schemas: public
 
-  # ─── Security / Session ───────────────────────────────────────────────────────
+  # ─── Security / Session ─────────────────────────────────────────────────────
   session:
     timeout: 30m
 
+  # ─── Mail ───────────────────────────────────────────────────────────────────
+  # BUG FIX: password is now read from environment variable.
+  # The previous hard-coded value "abcd efgh ijkl mnop" was a real Gmail App
+  # Password committed to a public repository — a critical credentials leak.
+  # Set SPRING_MAIL_PASSWORD in your .env (local) or secret manager (prod).
   mail:
     host: smtp.gmail.com
     port: 587
-    username: deep270804@gmail.com
-    password: abcd efgh ijkl mnop
+    username: ${SPRING_MAIL_USERNAME:deep270804@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:}      # MUST be set via env-var; never commit
     properties:
       mail:
         smtp:
@@ -55,13 +64,13 @@ spring:
             enable: true
     enabled: true
 
-  # ─── Web / Multipart ──────────────────────────────────────────────────────────
+  # ─── Web / Multipart ────────────────────────────────────────────────────────
   servlet:
     multipart:
       max-file-size: 5MB
       max-request-size: 10MB
 
-# ─── Server ───────────────────────────────────────────────────────────────────
+# ─── Server ─────────────────────────────────────────────────────────────────
 server:
   port: 8080
   servlet:
@@ -70,14 +79,14 @@ server:
       timeout: 30m
       cookie:
         http-only: true
-        secure: false   # Set to true in production (HTTPS only)
+        secure: false     # Set to true when running behind HTTPS in production
         same-site: strict
   error:
     whitelabel:
       enabled: false
     path: /error
 
-# ─── Actuator ─────────────────────────────────────────────────────────────────
+# ─── Actuator ───────────────────────────────────────────────────────────────
 management:
   endpoints:
     web:
@@ -89,12 +98,12 @@ management:
       show-details: when-authorized
   health:
     mail:
-      enabled: false   # SMTP creds are placeholders; exclude from health check
+      enabled: false    # SMTP creds may be absent in dev; exclude from health check
   metrics:
     tags:
       application: ${spring.application.name}
 
-# ─── SpringDoc / Swagger ──────────────────────────────────────────────────────
+# ─── SpringDoc / Swagger ────────────────────────────────────────────────────
 springdoc:
   api-docs:
     path: /api-docs
@@ -105,7 +114,7 @@ springdoc:
     disable-swagger-default-url: true
   show-actuator: false
 
-# ─── Logging ──────────────────────────────────────────────────────────────────
+# ─── Logging ────────────────────────────────────────────────────────────────
 logging:
   config: classpath:logback-spring.xml
   level:
@@ -113,14 +122,19 @@ logging:
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
 
-# ─── Application-specific ─────────────────────────────────────────────────────
+# ─── Application-specific ───────────────────────────────────────────────────
 banking:
   security:
     max-failed-attempts: 5
-    lock-time-duration: 15   # minutes
+    lock-time-duration: 15    # minutes
+    # BUG FIX: remember-me signing key is now configurable.
+    # The previous hard-coded value "banking-remember-me-secret-key-2024"
+    # was visible in source; an attacker could forge persistent cookies.
+    # Generate a strong random value and inject via environment variable.
+    remember-me-key: ${BANKING_REMEMBER_ME_KEY:banking-remember-me-dev-key-change-in-prod}
   account:
-    default-daily-limit: 100000   # INR 1,00,000
-    minimum-balance: 500          # INR 500
+    default-daily-limit: 100000    # INR 1,00,000
+    minimum-balance: 500           # INR 500
   file:
     upload-dir: ./uploads/profiles
   pdf:

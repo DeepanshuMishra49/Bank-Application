@@ -1,23 +1,37 @@
-# Stage 1 - Build
+# ──────────────────────────────────────────────────────────────────
+# Stage 1 — Build
+# ──────────────────────────────────────────────────────────────────
 FROM maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /build
 
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar /app/agent.jar
+# BUG FIX: pin a specific OTel agent version instead of 'latest'
+# Using 'latest' makes builds non-reproducible and can break on new releases.
+ARG OTEL_AGENT_VERSION=2.9.0
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v${OTEL_AGENT_VERSION}/opentelemetry-javaagent.jar /app/agent.jar
 
+# Cache Maven dependencies before copying source (layer-cache optimization)
 COPY pom.xml .
-RUN mvn dependency:go-offline
-COPY src ./src
-RUN mvn clean package -DskipTests
+RUN mvn dependency:go-offline -q
 
-# Stage 2 - Runtime
+COPY src ./src
+RUN mvn clean package -DskipTests -q
+
+# ──────────────────────────────────────────────────────────────────
+# Stage 2 — Runtime
+# ──────────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-RUN mkdir -p /app/logs
+# BUG FIX: install curl so the docker-compose healthcheck doesn't fail.
+# eclipse-temurin:21-jre-alpine ships without curl; the compose healthcheck
+# runs `curl -f http://localhost:8080/actuator/health` which would always
+# error, keeping the container stuck in "starting" state forever.
+RUN apk add --no-cache curl
+
+RUN mkdir -p /app/logs /app/uploads
 
 COPY --from=builder /build/target/*.jar app.jar
-# ← Yeh line missing thi — agent copy karo builder se
-COPY --from=builder /app/agent.jar agent.jar
+COPY --from=builder /app/agent.jar       agent.jar
 
 EXPOSE 8080
 

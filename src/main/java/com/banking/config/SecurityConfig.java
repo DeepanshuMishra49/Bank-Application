@@ -3,6 +3,7 @@ package com.banking.config;
 import com.banking.security.*;
 import com.banking.util.BankingConstants;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,17 +21,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 /**
  * Enterprise-grade Spring Security configuration.
- *
- * <p>Provides:
- * <ul>
- *   <li>BCrypt password encoding</li>
- *   <li>CSRF protection (enabled)</li>
- *   <li>Security headers (XSS, CSP, referrer policy)</li>
- *   <li>Session fixation protection</li>
- *   <li>Role-based URL authorization</li>
- *   <li>Custom login/logout handlers</li>
- *   <li>Remember-me support</li>
- * </ul>
  */
 @Configuration
 @EnableWebSecurity
@@ -39,26 +29,30 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
-    private final LoginSuccessHandler loginSuccessHandler;
-    private final LoginFailureHandler loginFailureHandler;
+    private final LoginSuccessHandler      loginSuccessHandler;
+    private final LoginFailureHandler      loginFailureHandler;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final CustomLogoutSuccessHandler logoutSuccessHandler;
 
     /**
-     * BCrypt password encoder with strength 12 for production-grade hashing.
+     * BUG FIX: the remember-me signing key is now read from application.yml
+     * (or the BANKING_REMEMBER_ME_KEY environment variable). The previous
+     * hard-coded value "banking-remember-me-secret-key-2024" was visible in
+     * a public repository, allowing anyone to forge persistent "remember me"
+     * cookies for any user account.
      *
-     * @return configured PasswordEncoder
+     * <p>The default value here is safe only for local development — always
+     * set a strong random secret (≥ 32 chars) via environment variable in
+     * any deployed environment.
      */
+    @Value("${banking.security.remember-me-key:banking-remember-me-dev-key-change-in-prod}")
+    private String rememberMeKey;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(BankingConstants.BCRYPT_STRENGTH);
     }
 
-    /**
-     * DAO authentication provider wiring the UserDetailsService and PasswordEncoder.
-     *
-     * @return configured DaoAuthenticationProvider
-     */
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -67,52 +61,30 @@ public class SecurityConfig {
         return provider;
     }
 
-    /**
-     * Authentication manager exposing the global AuthenticationManager bean.
-     *
-     * @param authConfig Spring's AuthenticationConfiguration
-     * @return the AuthenticationManager
-     * @throws Exception if configuration fails
-     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
-    /**
-     * Main security filter chain defining all URL security rules, CSRF,
-     * session management, security headers, and authentication endpoints.
-     *
-     * @param http the HttpSecurity to configure
-     * @return the built SecurityFilterChain
-     * @throws Exception if configuration fails
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // ─── Authorization ────────────────────────────────────────────────
             .authorizeHttpRequests(auth -> auth
-                // Public resources
                 .requestMatchers(
                     "/login", "/register", "/error", "/access-denied",
                     "/css/**", "/js/**", "/images/**", "/favicon.ico",
                     "/actuator/health", "/actuator/prometheus",
                     "/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
                 ).permitAll()
-                // Admin-only
                 .requestMatchers("/admin/**").hasAuthority(BankingConstants.ROLE_ADMIN)
                 .requestMatchers("/api/v1/admin/**").hasAuthority(BankingConstants.ROLE_ADMIN)
-                // Employee-only
                 .requestMatchers("/employee/**").hasAuthority(BankingConstants.ROLE_EMPLOYEE)
                 .requestMatchers("/api/v1/employee/**").hasAuthority(BankingConstants.ROLE_EMPLOYEE)
-                // Customer-only
                 .requestMatchers("/customer/**").hasAuthority(BankingConstants.ROLE_CUSTOMER)
                 .requestMatchers("/api/v1/customer/**").hasAuthority(BankingConstants.ROLE_CUSTOMER)
-                // Any authenticated user
                 .anyRequest().authenticated()
             )
 
-            // ─── Form Login ───────────────────────────────────────────────────
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
@@ -123,7 +95,6 @@ public class SecurityConfig {
                 .permitAll()
             )
 
-            // ─── Logout ───────────────────────────────────────────────────────
             .logout(logout -> logout
                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "POST"))
                 .logoutSuccessHandler(logoutSuccessHandler)
@@ -133,15 +104,14 @@ public class SecurityConfig {
                 .permitAll()
             )
 
-            // ─── Remember Me ──────────────────────────────────────────────────
             .rememberMe(remember -> remember
-                .key("banking-remember-me-secret-key-2024")
+                // BUG FIX: key is injected from config, not hard-coded
+                .key(rememberMeKey)
                 .tokenValiditySeconds(7 * 24 * 60 * 60) // 7 days
                 .userDetailsService(userDetailsService)
                 .rememberMeParameter("rememberMe")
             )
 
-            // ─── Session Management ───────────────────────────────────────────
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .invalidSessionUrl("/login?expired")
@@ -149,44 +119,35 @@ public class SecurityConfig {
                 .maxSessionsPreventsLogin(false)
             )
 
-            // ─── Exception Handling ───────────────────────────────────────────
             .exceptionHandling(ex -> ex
                 .accessDeniedHandler(accessDeniedHandler)
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.sendRedirect(request.getContextPath() + "/login");
-                })
+                .authenticationEntryPoint((request, response, authException) ->
+                    response.sendRedirect(request.getContextPath() + "/login"))
             )
 
-            // ─── CSRF ─────────────────────────────────────────────────────────
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/api/v1/**", "/actuator/**")
             )
 
-            // ─── Security Headers ─────────────────────────────────────────────
             .headers(headers -> headers
-                .xssProtection(xss -> xss.disable()) // CSP handles XSS
-                .contentSecurityPolicy(csp -> csp
-                    .policyDirectives(
-                        "default-src 'self'; " +
-                        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-                        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
-                        "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " +
-                        "img-src 'self' data: https:; " +
-                        "connect-src 'self';"
-                    )
-                )
+                .xssProtection(xss -> xss.disable())
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " +
+                    "img-src 'self' data: https:; " +
+                    "connect-src 'self';"
+                ))
                 .referrerPolicy(referrer -> referrer
-                    .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-                )
+                    .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
                 .frameOptions(frame -> frame.sameOrigin())
                 .httpStrictTransportSecurity(hsts -> hsts
                     .includeSubDomains(true)
-                    .maxAgeInSeconds(31536000)
-                )
+                    .maxAgeInSeconds(31536000))
             );
 
         http.authenticationProvider(authenticationProvider());
-
         return http.build();
     }
 }

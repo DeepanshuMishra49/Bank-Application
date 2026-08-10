@@ -1,13 +1,13 @@
 services:
 
-  # ── PostgreSQL Database ─────────────────────────────────────
+  # ── PostgreSQL Database ─────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: banking-db
     environment:
       POSTGRES_DB: banking_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgresnew
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgresnew}   # use .env file in prod
     ports:
       - "5432:5432"
     volumes:
@@ -21,44 +21,63 @@ services:
       - banking-network
     restart: unless-stopped
 
-  # ── Spring Boot Application ─────────────────────────────────
+  # ── Spring Boot Application ─────────────────────────────────────
+  # BUG FIX 1: Added `build: .` so local code changes are reflected
+  #            without needing a separate manual docker build step.
+  # BUG FIX 2: Changed SPRING_DATASOURCE_URL to point at the LOCAL
+  #            postgres container (service name = "postgres") instead
+  #            of a hardcoded AWS RDS endpoint. The old value was:
+  #            jdbc:postgresql://database-1.ce58ycum4znw.us-east-1.rds.amazonaws.com:5432/...
+  #            which (a) leaks infra details in version control,
+  #            (b) requires an active AWS connection just to run locally,
+  #            (c) made the `depends_on: postgres` condition pointless
+  #            because the app never actually talked to that container.
+  # BUG FIX 3: Removed the global-bundle.pem volume mount — it is only
+  #            needed for AWS RDS with sslmode=verify-full. For local dev
+  #            it is irrelevant and its absence caused startup warnings.
   app-banking:
-    image: deep270804/bank_app:latest
+    build: .                          # build from local Dockerfile
+    # image: deep270804/bank_app:latest  # ← uncomment to use pre-built image
     container_name: banking-app
-    volumes:
-       - ./global-bundle.pem:/app/global-bundle.pem
     environment:
+      # ── Database (local postgres) ──────────────────────────────
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/banking_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgresnew}
+      # ── Profiles ──────────────────────────────────────────────
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      # ── OpenTelemetry ─────────────────────────────────────────
       OTEL_SERVICE_NAME: banking-service
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_TRACES_EXPORTER: otlp
       OTEL_LOGS_EXPORTER: otlp
-      OTEL_METRICS_EXPORTER: otlp  
-      SPRING_DATASOURCE_URL: jdbc:postgresql://database-1.ce58ycum4znw.us-east-1.rds.amazonaws.com:5432/banking_db?sslmode=verify-full&sslrootcert=/app/global-bundle.pem
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgresnew
-      SPRING_PROFILES_ACTIVE: prod
+      OTEL_METRICS_EXPORTER: otlp
+      # ── App-level overrides ───────────────────────────────────
       BANKING_ACCOUNT_MINIMUM_BALANCE: 500
+      # ── Mail (override placeholder from application.yml) ──────
+      SPRING_MAIL_PASSWORD: ${MAIL_APP_PASSWORD:-}
     ports:
       - "8080:8080"
     depends_on:
       postgres:
-        condition: service_healthy
-      otel-collector: 
+        condition: service_healthy   # wait for DB to be ready
+      otel-collector:
         condition: service_started
     networks:
       - banking-network
     restart: unless-stopped
     healthcheck:
+      # Works because the Dockerfile now installs curl (see Dockerfile fix).
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 90s
-  
-  # ── OTel Collector ─────────────────────────────────────────
+
+  # ── OTel Collector ─────────────────────────────────────────────
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.107.0   # pinned version
     container_name: otel-collector
     command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
@@ -75,7 +94,7 @@ services:
       - banking-network
     restart: unless-stopped
 
-  # ── Prometheus ──────────────────────────────────────────────
+  # ── Prometheus ──────────────────────────────────────────────────
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -88,9 +107,9 @@ services:
       - banking-network
     restart: unless-stopped
 
-  # ── Loki ────────────────────────────────────────────────────
+  # ── Loki ────────────────────────────────────────────────────────
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.2.0   # pinned; 'latest' can break OTLP config
     container_name: loki
     ports:
       - "3100:3100"
@@ -99,30 +118,32 @@ services:
       - banking-network
     restart: unless-stopped
 
-  # ── Jaeger ──────────────────────────────────────────────────
+  # ── Jaeger ──────────────────────────────────────────────────────
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/all-in-one:1.60
     container_name: jaeger
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
-      - "16686:16686"
-      - "14250:14250"
-      - "4317"      # OTLP gRPC (internal only)
-      - "4318"      # OTLP HTTP (internal only)
+      - "16686:16686"   # Jaeger UI
+      - "14250:14250"   # gRPC model
+      # NOTE: 4317 / 4318 are NOT exposed to the host here to avoid
+      # port conflicts with otel-collector, which already owns those
+      # host ports. Jaeger receives traces from otel-collector inside
+      # the docker network on its own container IP.
     networks:
       - banking-network
     restart: unless-stopped
 
-  # ── Grafana ─────────────────────────────────────────────────
+  # ── Grafana ─────────────────────────────────────────────────────
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.2.0
     container_name: grafana
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
@@ -140,7 +161,7 @@ volumes:
   postgres_data:
     driver: local
   prometheus_data:
-    driver: local    
+    driver: local
   grafana_data:
     driver: local
 
